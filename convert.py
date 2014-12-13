@@ -28,6 +28,11 @@ def convertFunc(fromdirname, filename, s):
         for funcToExpand in ["fe_tobytes", "fe_sq", "fe_mul"]:
             s = s.replace(funcToExpand, "%s.%s" % (funcToExpand, funcToExpand))
 
+    for count in range(10): # fe_frombytes, mul, sq, sq2 (long->int)
+        t1 = "h[%d] = h%d;" % (count, count)
+        t2 = "h[%d] = (int)h%d;" % (count, count)
+        s = s.replace(t1, t2)
+
     s = s.replace("#include", "//CONVERT #include")
     s = "package generated;\n\npublic class %s {\n\n%s\n\n}\n" % (filename, s)
     return s
