@@ -25,7 +25,7 @@ def convertFunc(fromdirname, filename, s):
         s = s[ : eolIndex+1] + s2 + s[eolIndex+1 : ]
 
     if filename in ("fe_invert", "fe_isnegative", "fe_isnonzero"):
-        for funcToExpand in ["fe_tobytes", "fe_sq", "fe_mul"]:
+        for funcToExpand in ["fe_tobytes", "fe_sq", "fe_mul", "crypto_verify_32"]:
             s = s.replace(funcToExpand, "%s.%s" % (funcToExpand, funcToExpand))
 
     for count in range(10): # fe_frombytes, mul, sq, sq2 (long->int)
