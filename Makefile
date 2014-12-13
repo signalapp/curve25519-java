@@ -1,0 +1,6 @@
+
+all:
+	javac generated/*.java
+
+
+
