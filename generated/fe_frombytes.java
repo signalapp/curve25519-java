@@ -6,22 +6,22 @@ public class fe_frombytes {
 //CONVERT #include "long.h"
 //CONVERT #include "long.h"
 
-public static long load_3(byte[] in)
+public static long load_3(byte[] in, int index)
 {
   long result;
-  result = (long) in[0];
-  result |= ((long) in[1]) << 8;
-  result |= ((long) in[2]) << 16;
+  result = ((long) in[index + 0]) & 0xFF;
+  result |= (((long) in[index + 1]) << 8) & 0xFF00;
+  result |= (((long) in[index + 2]) << 16) & 0xFF0000;
   return result;
 }
 
-public static long load_4(byte[] in)
+public static long load_4(byte[] in, int index)
 {
   long result;
-  result = (long) in[0];
-  result |= ((long) in[1]) << 8;
-  result |= ((long) in[2]) << 16;
-  result |= ((long) in[3]) << 24;
+  result = (((long) in[index + 0]) & 0xFF);
+  result |= ((((long) in[index + 1]) << 8) & 0xFF00);
+  result |= ((((long) in[index + 2]) << 16) & 0xFF0000);
+  result |= ((((long) in[index + 3]) << 24) & 0xFF000000L);
   return result;
 }
 
@@ -31,16 +31,16 @@ Ignores top bit of h.
 
 public static void fe_frombytes(int[] h,byte[] s)
 {
-  long h0 = load_4(s);
-  long h1 = load_3(s + 4) << 6;
-  long h2 = load_3(s + 7) << 5;
-  long h3 = load_3(s + 10) << 3;
-  long h4 = load_3(s + 13) << 2;
-  long h5 = load_4(s + 16);
-  long h6 = load_3(s + 20) << 7;
-  long h7 = load_3(s + 23) << 5;
-  long h8 = load_3(s + 26) << 4;
-  long h9 = (load_3(s + 29) & 8388607) << 2;
+  long h0 = load_4(s, 0);
+  long h1 = load_3(s, 4) << 6;
+  long h2 = load_3(s, 7) << 5;
+  long h3 = load_3(s, 10) << 3;
+  long h4 = load_3(s, 13) << 2;
+  long h5 = load_4(s, 16);
+  long h6 = load_3(s, 20) << 7;
+  long h7 = load_3(s, 23) << 5;
+  long h8 = load_3(s, 26) << 4;
+  long h9 = (load_3(s, 29) & 8388607) << 2;
   long carry0;
   long carry1;
   long carry2;
