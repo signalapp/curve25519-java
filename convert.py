@@ -34,7 +34,7 @@ def convertFunc(fromdirname, filename, s):
         s = s.replace(t1, t2)
 
     s = s.replace("#include", "//CONVERT #include")
-    s = "package generated;\n\npublic class %s {\n\n%s\n\n}\n" % (filename, s)
+    s = "package javasrc;\n\npublic class %s {\n\n%s\n\n}\n" % (filename, s)
     return s
 
 def convertFile(fromdirname, filename):

@@ -1,4 +1,4 @@
-package generated;
+package javasrc;
 
 public class crypto_verify_32 {
 

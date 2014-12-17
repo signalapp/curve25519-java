@@ -6,10 +6,10 @@ public class fe_invert {
 
 public static void fe_invert(int[] out,int[] z)
 {
-  int[] t0;
-  int[] t1;
-  int[] t2;
-  int[] t3;
+  int[] t0 = new int[10];
+  int[] t1 = new int[10];
+  int[] t2 = new int[10];
+  int[] t3 = new int[10];
   int i;
 
 //CONVERT #include "pow225521.h"

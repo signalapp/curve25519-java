@@ -3,8 +3,7 @@ c:
 	gcc -I headers/ ref10_extract/*.c
 
 java:
-	javac generated/*.java
-
+	javac javasrc/*.java
 
 test:
-	java -cp . generated.Test
+	java -cp . javasrc.Test

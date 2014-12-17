@@ -1,4 +1,4 @@
-package generated;
+package javasrc;
 import java.util.Arrays;
 
 public class Test
