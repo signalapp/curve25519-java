@@ -1,6 +1,5 @@
-
-c:
-	gcc -I headers/ ref10_extract/*.c
+convert:
+	python ./convert.py
 
 java:
 	javac javasrc/*.java
