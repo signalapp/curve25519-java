@@ -34,6 +34,13 @@ def convertFunc(fromdirname, filename, s):
     s = s.replace("static long", "public static long") # fe_frombytes
     s = s.replace("int fe", "public static int fe") # fe_isnegative
 
+    for includeFile in ("pow225521", "pow22523", "ge_add", "base2", "d2", "ge_sub"):
+        includeIndex = s.find('#include "%s.h"' % includeFile)
+        if includeIndex != -1:
+            s2 = open(fromdirname + "/" + "%s.h" % includeFile).read()
+            eolIndex = s.find("\n", includeIndex)
+            s = s[ : eolIndex+1] + s2 + s[eolIndex+1 : ]
+    """
     includeIndex = s.find('#include "pow225521.h"')
     if includeIndex != -1:
         s2 = open(fromdirname + "/" + "pow225521.h").read()
@@ -45,9 +52,13 @@ def convertFunc(fromdirname, filename, s):
         s2 = open(fromdirname + "/" + "pow22523.h").read()
         eolIndex = s.find("\n", includeIndex)
         s = s[ : eolIndex+1] + s2 + s[eolIndex+1 : ]
-
+    """
     if filename in ("fe_invert", "fe_isnegative", "fe_isnonzero", "fe_pow22523"):
         for funcToExpand in ["fe_tobytes", "fe_sq", "fe_mul", "crypto_verify_32"]:
+            s = s.replace(funcToExpand, "%s.%s" % (funcToExpand, funcToExpand))
+
+    if filename in ("ge_add"):
+        for funcToExpand in ["fe_add", "fe_sub", "fe_mul"]:
             s = s.replace(funcToExpand, "%s.%s" % (funcToExpand, funcToExpand))
 
     for count in range(10): # fe_frombytes, mul, sq, sq2 (long->int)
