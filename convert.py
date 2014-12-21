@@ -6,10 +6,17 @@ def convertFunc(fromdirname, filename, s):
     s = s.replace("fe t1;", "fe t1 = new int[10];")
     s = s.replace("fe t2;", "fe t2 = new int[10];")
     s = s.replace("fe t3;", "fe t3 = new int[10];")
+
     s = s.replace("fe u;", "fe u = new int[10];") # ge_frombytes
     s = s.replace("fe v;", "fe v = new int[10];") # ge_frombytes
     s = s.replace("fe vxx;", "fe vxx = new int[10];") # ge_frombytes
     s = s.replace("fe check;", "fe check = new int[10];") # ge_frombytes
+
+    s = s.replace("ge_p1p1 *", "ge_p1p1 ")
+    s = s.replace("ge_p2 *", "ge_p2 ")
+    s = s.replace("ge_p3 *", "ge_p3 ")
+    s = s.replace("ge_precomp *", "ge_precomp ")
+    s = s.replace("ge_cached *", "ge_cached ")
 
     s = s.replace("unsigned char s[32]", "byte[] s = new byte[32]")
     s = s.replace("static const unsigned char zero[32];", "static final byte[] zero = new byte[32];")
