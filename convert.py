@@ -17,6 +17,7 @@ def convertFunc(fromdirname, filename, s):
     s = s.replace("ge_p3 *", "ge_p3 ")
     s = s.replace("ge_precomp *", "ge_precomp ")
     s = s.replace("ge_cached *", "ge_cached ")
+    s = s.replace("extern ", "")
 
     s = s.replace("unsigned char s[32]", "byte[] s = new byte[32]")
     s = s.replace("static const unsigned char zero[32];", "static final byte[] zero = new byte[32];")
@@ -41,24 +42,12 @@ def convertFunc(fromdirname, filename, s):
             s2 = open(fromdirname + "/" + "%s.h" % includeFile).read()
             eolIndex = s.find("\n", includeIndex)
             s = s[ : eolIndex+1] + s2 + s[eolIndex+1 : ]
-    """
-    includeIndex = s.find('#include "pow225521.h"')
-    if includeIndex != -1:
-        s2 = open(fromdirname + "/" + "pow225521.h").read()
-        eolIndex = s.find("\n", includeIndex)
-        s = s[ : eolIndex+1] + s2 + s[eolIndex+1 : ]
 
-    includeIndex = s.find('#include "pow22523.h"')
-    if includeIndex != -1:
-        s2 = open(fromdirname + "/" + "pow22523.h").read()
-        eolIndex = s.find("\n", includeIndex)
-        s = s[ : eolIndex+1] + s2 + s[eolIndex+1 : ]
-    """
     if filename in ("fe_invert", "fe_isnegative", "fe_isnonzero", "fe_pow22523"):
         for funcToExpand in ["fe_tobytes", "fe_sq", "fe_mul", "crypto_verify_32"]:
             s = s.replace(funcToExpand, "%s.%s" % (funcToExpand, funcToExpand))
 
-    if filename in ("ge_add"):
+    if filename in ("ge_add", "ge_madd", "ge_msub", "ge_p1p1_to_p2"):
         for funcToExpand in ["fe_add", "fe_sub", "fe_mul"]:
             s = s.replace(funcToExpand, "%s.%s" % (funcToExpand, funcToExpand))
 
@@ -66,6 +55,8 @@ def convertFunc(fromdirname, filename, s):
         t1 = "h[%d] = h%d;" % (count, count)
         t2 = "h[%d] = (int)h%d;" % (count, count)
         s = s.replace(t1, t2)
+
+    s = s.replace("->", ".")
 
     s = s.replace("#include", "//CONVERT #include")
     s = "package javasrc;\n\npublic class %s {\n\n%s\n\n}\n" % (filename, s)
