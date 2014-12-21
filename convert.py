@@ -34,7 +34,8 @@ def convertFunc(fromdirname, filename, s):
     s = s.replace("static long", "public static long") # fe_frombytes
     s = s.replace("int fe", "public static int fe") # fe_isnegative
 
-    for includeFile in ("pow225521", "pow22523", "ge_add", "base2", "d2", "ge_sub"):
+    for includeFile in ("pow225521", "pow22523", "ge_add", "base2", "d2", "ge_sub", "d", "sqrtm1",
+                        "ge_madd", "ge_msub"):
         includeIndex = s.find('#include "%s.h"' % includeFile)
         if includeIndex != -1:
             s2 = open(fromdirname + "/" + "%s.h" % includeFile).read()
