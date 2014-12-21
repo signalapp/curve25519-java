@@ -2,6 +2,15 @@
 import re
 
 def convertFunc(fromdirname, filename, s):
+    s = s.replace("fe t0;", "fe t0 = new int[10];")
+    s = s.replace("fe t1;", "fe t1 = new int[10];")
+    s = s.replace("fe t2;", "fe t2 = new int[10];")
+    s = s.replace("fe t3;", "fe t3 = new int[10];")
+    s = s.replace("fe u;", "fe u = new int[10];") # ge_frombytes
+    s = s.replace("fe v;", "fe v = new int[10];") # ge_frombytes
+    s = s.replace("fe vxx;", "fe vxx = new int[10];") # ge_frombytes
+    s = s.replace("fe check;", "fe check = new int[10];") # ge_frombytes
+
     s = s.replace("unsigned char s[32]", "byte[] s = new byte[32]")
     s = s.replace("static const unsigned char zero[32];", "static final byte[] zero = new byte[32];")
     s = s.replace("fe ", "int[] ")
@@ -24,7 +33,13 @@ def convertFunc(fromdirname, filename, s):
         eolIndex = s.find("\n", includeIndex)
         s = s[ : eolIndex+1] + s2 + s[eolIndex+1 : ]
 
-    if filename in ("fe_invert", "fe_isnegative", "fe_isnonzero"):
+    includeIndex = s.find('#include "pow22523.h"')
+    if includeIndex != -1:
+        s2 = open(fromdirname + "/" + "pow22523.h").read()
+        eolIndex = s.find("\n", includeIndex)
+        s = s[ : eolIndex+1] + s2 + s[eolIndex+1 : ]
+
+    if filename in ("fe_invert", "fe_isnegative", "fe_isnonzero", "fe_pow22523"):
         for funcToExpand in ["fe_tobytes", "fe_sq", "fe_mul", "crypto_verify_32"]:
             s = s.replace(funcToExpand, "%s.%s" % (funcToExpand, funcToExpand))
 
@@ -58,7 +73,26 @@ def convertFiles(fromdirname, todirname):
         "fe_sq",
         "fe_sq2",
         "fe_sub",
-        "fe_tobytes"]
+        "fe_tobytes",
+        "ge_add",
+        "ge_p1p1_to_p3",
+        "ge_p3_to_p2",
+        "ge_double_scalarmult",  
+        "ge_p2_0",
+        "ge_p3_tobytes",
+        "ge_frombytes",
+        "ge_p2_dbl",
+        "ge_precomp_0",
+        "ge_madd",
+        "ge_p3_0",
+        "ge_scalarmult_base",
+        "ge_msub",
+        "ge_p3_dbl",
+        "ge_sub",
+        "ge_p1p1_to_p2",
+        "ge_p3_to_cached",
+        "ge_tobytes"]
+        
     for filename in filenames:
         s = convertFile(fromdirname, filename)
         #print(filename + "\n=======\n" + s)
