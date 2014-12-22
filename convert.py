@@ -135,7 +135,9 @@ def convertFiles(fromdirname, todirname):
         "ge_tobytes",
         "fe_mul121666",
         "fe_cswap",
-        "scalarmult"]
+        "scalarmult",
+        "sc_reduce",
+        "sc_muladd"]
         
     for filename in filenames:
         s = convertFile(fromdirname, filename)
