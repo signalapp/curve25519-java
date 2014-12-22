@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class Test
 {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         byte[] p = new byte[32];
         byte[] q = new byte[32];
         byte[] n = new byte[32];
@@ -47,9 +47,17 @@ public class Test
             System.exit(-1);
         }
         System.out.println("OK");
+
+        /* Sign */ 
+        byte[] msg = new byte[1000];
+        byte[] sig_out = new byte[64];
+        byte[] privkey = new byte[32];
+        byte[] random = new byte[64];
+
+        curve_sigs.curve25519_sign(sig_out, privkey, msg, 100, random);
+        System.out.printf("\n");
+        for (int c=0; c<64; c++)
+            System.out.printf("%02x ", sig_out[c]);
+        System.out.printf("\n");
     }
-
-
-    
-
 }

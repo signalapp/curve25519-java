@@ -40,7 +40,7 @@ public class curve_sigs {
     public static int curve25519_sign(byte[] signature_out,
                         byte[] curve25519_privkey,
                         byte[] msg, long msg_len,
-                        byte[] random)
+                        byte[] random) throws Exception
     {
       ge_p3 ed_pubkey_point = new ge_p3(); /* Ed25519 pubkey point */
       byte[] ed_pubkey = new byte[32]; /* Ed25519 encoded pubkey */
@@ -58,8 +58,8 @@ public class curve_sigs {
       sign_bit = (byte)(ed_pubkey[31] & 0x80);
 
       /* Perform an Ed25519 signature with explicit private key */
-      //TEMPcrypto_sign_modified(sigbuf, msg, msg_len, curve25519_privkey,
-      //TEMP                     ed_pubkey, random);
+      sign_modified.crypto_sign_modified(sigbuf, msg, msg_len, curve25519_privkey,
+                                         ed_pubkey, random);
       System.arraycopy(sigbuf, 0, signature_out, 0, 64);
 
       /* Encode the sign bit into signature (in unused high bit of S) */
