@@ -21,8 +21,15 @@ def convertFunc(fromdirname, filename, s):
     s = s.replace("ge_precomp *", "ge_precomp ")
     s = s.replace("ge_cached *", "ge_cached ")
     s = s.replace("extern ", "")
-
+    s = s.replace("ge_p2 q;", "ge_p2 q = new ge_p2();")
     s = s.replace("unsigned char s[32]", "byte[] s = new byte[32]")
+    #ge_cached Ai[8]; /* A,3A,5A,7A,9A,11A,13A,15A */
+    s = s.replace("ge_p1p1 t;", "ge_p1p1 t = new ge_p1p1();")
+    s = s.replace("ge_p3 u;", "ge_p3 u = new ge_p3();")
+    s = s.replace("ge_p3 A2;", "ge_p3 A2 = new ge_p3();")
+    s = s.replace("signed char aslide[256];", "byte[] aslide = new byte[256];")
+    s = s.replace("signed char bslide[256];", "byte[] bslide = new byte[256];")
+
     s = s.replace("static const unsigned char zero[32];", "static final byte[] zero = new byte[32];")
     s = s.replace("fe ", "int[] ")
     s = s.replace("const ", "")
@@ -30,6 +37,7 @@ def convertFunc(fromdirname, filename, s):
     s = s.replace("crypto_int64", "long")
     s = s.replace("crypto_uint64", "long") # weird but I think ok - fe_frombytes
     s = s.replace("unsigned char *", "byte[] ")
+    s = s.replace("signed char *", "byte[] ") # for ge_double_scalarmult, has to be after prev line
 
     s = s.replace("unsigned int", "int") # fe_cmov
     s = s.replace("unsigned char", "int") # fe_cmov
@@ -52,12 +60,15 @@ def convertFunc(fromdirname, filename, s):
 
     if filename in ("ge_add", "ge_madd", "ge_msub", "ge_p1p1_to_p2", "ge_p1p1_to_p3",
                     "ge_p2_0", "ge_p2_dbl", "ge_p3_0", "ge_p3_dbl", "ge_p3_to_cached",
-                    "ge_p3_to_p2", "ge_p3_tobytes", "ge_precomp_0", "ge_sub"):
+                    "ge_p3_to_p2", "ge_p3_tobytes", "ge_precomp_0", "ge_sub", "ge_tobytes",
+                    "ge_double_scalarmult", "ge_p2_dbl", "ge_p3_dbl"):
         funcsToExpand = ["fe_add", "fe_sub", "fe_mul", "fe_copy", "ge_p3_to_p2", "ge_p2_dbl",
-                         "fe_invert", "fe_tobytes", "fe_isnegative", "fe_0", "fe_1"]
+                         "fe_invert", "fe_tobytes", "fe_isnegative", "fe_0", "fe_1", 
+                         "ge_p1p1_to_p3", "ge_madd", "ge_sub", "ge_msub", "ge_p3_to_cached",
+                         "ge_add", "ge_p1p1_to_p2", "ge_p2_0", "ge_p3_dbl", "fe_sq", "fe_sq2"]
         funcsToExpand = [f for f in funcsToExpand if f != filename]
         for funcToExpand in funcsToExpand:
-            s = s.replace(funcToExpand, "%s.%s" % (funcToExpand, funcToExpand))
+            s = s.replace(funcToExpand+"(", "%s.%s(" % (funcToExpand, funcToExpand))
 
     for count in range(10): # fe_frombytes, mul, sq, sq2 (long->int)
         t1 = "h[%d] = h%d;" % (count, count)
@@ -65,6 +76,9 @@ def convertFunc(fromdirname, filename, s):
         s = s.replace(t1, t2)
 
     s = s.replace("->", ".")
+
+    for ampchar in ("utABbmrqs"): #replace pointer-address-of in ge_
+        s = s.replace("&"+ampchar, ampchar)
 
     s = s.replace("#include", "//CONVERT #include")
     s = "package javasrc;\n\npublic class %s {\n\n%s\n\n}\n" % (filename, s)
