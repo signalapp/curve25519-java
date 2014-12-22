@@ -48,16 +48,30 @@ public class Test
         }
         System.out.println("OK");
 
-        /* Sign */ 
+        /* Sign and verify */ 
         byte[] msg = new byte[1000];
         byte[] sig_out = new byte[64];
         byte[] privkey = new byte[32];
+        byte[] pubkey = new byte[32];
         byte[] random = new byte[64];
 
-        curve_sigs.curve25519_sign(sig_out, privkey, msg, 100, random);
-        System.out.printf("\n");
-        for (int c=0; c<64; c++)
-            System.out.printf("%02x ", sig_out[c]);
-        System.out.printf("\n");
+        privkey[0] = 123;
+        for (int count=0; count < 1000; count++) {
+            privkey[31] &= 0x7F;
+            privkey[31] |= 0x40;
+            privkey[0] &= 0xF8;
+            curve_sigs.curve25519_keygen(pubkey, privkey);
+            curve_sigs.curve25519_sign(sig_out, privkey, msg, 100, random);
+            if (curve_sigs.curve25519_verify(sig_out, pubkey, msg, 100) != 0) {
+                System.out.println("SIGNATURE FAIL");
+                System.exit(-1);
+            }
+            System.arraycopy(sig_out, 0, privkey, 0, 32);
+            //System.out.printf("\n");
+            //for (int c=0; c<64; c++)
+            //    System.out.printf("%02x ", sig_out[c]);
+            //System.out.printf("\n");
+        }
+        System.out.println("OK");
     }
 }

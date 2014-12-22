@@ -68,9 +68,9 @@ public class curve_sigs {
        return 0;
     }
 
-    int curve25519_verify(byte[] signature,
+    static int curve25519_verify(byte[] signature,
                           byte[] curve25519_pubkey,
-                          byte[] msg, long msg_len)
+                          byte[] msg, long msg_len) throws Exception
     {
       int[] mont_x = new int[10];
       int[] mont_x_minus_one = new int[10];
@@ -79,7 +79,7 @@ public class curve_sigs {
       int[] one = new int[10];
       int[] ed_y = new int[10];
       byte[] ed_pubkey = new byte[32];
-      long some_retval;
+      long some_retval = 0;
       byte[] verifybuf = new byte[MAX_MSG_LEN + 64]; /* working buffer */
       byte[] verifybuf2 = new byte[MAX_MSG_LEN + 64]; /* working buffer #2 */
 
@@ -119,7 +119,6 @@ public class curve_sigs {
       /* verifybuf2 = internal to next call gets a copy of verifybuf, S gets 
          replaced with pubkey for hashing, then the whole thing gets zeroized
          (if bad sig), or contains a copy of msg (good sig) */
-      //TEMPreturn crypto_sign_open(verifybuf2, some_retval, verifybuf, 64 + msg_len, ed_pubkey);
-        return 0;
+      return open.crypto_sign_open(verifybuf2, some_retval, verifybuf, 64 + msg_len, ed_pubkey);
     }
 }
