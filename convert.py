@@ -152,8 +152,3 @@ def convertFiles(fromdirname, todirname):
         open(todirname + "/" + filename+".java", "w").write(s)
 
 convertFiles("ref10_extract", "generated")
-
-#import sys
-#filename = sys.argv[1]
-#print convertFile("ref10_extract", filename)
-

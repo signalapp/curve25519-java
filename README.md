@@ -1,10 +1,13 @@
 
 API
 ----
-javasrc.scalarmult.crypto_scalarmult()  # ECDH or key generation
-javasrc.curve_sigs.curve25519_keygen()  # Faster key generation
-javasrc.curve_sigs.curve25519_sign()
-javasrc.curve_sigs.curve25519_verify()
+ * javasrc.scalarmult.crypto_scalarmult()  # ECDH or key generation
+
+ * javasrc.curve_sigs.curve25519_keygen()  # Faster key generation
+
+ * javasrc.curve_sigs.curve25519_sign()
+
+ * javasrc.curve_sigs.curve25519_verify()
 
 Testing
 --------
