@@ -47,7 +47,7 @@ def convertFunc(fromdirname, filename, s):
     s = s.replace("int fe", "public static int fe") # fe_isnegative
 
     for includeFile in ("pow225521", "pow22523", "ge_add", "base2", "d2", "ge_sub", "d", "sqrtm1",
-                        "ge_madd", "ge_msub", "ge_p2_dbl"):
+                        "ge_madd", "ge_msub", "ge_p2_dbl", "base"):
         includeIndex = s.find('#include "%s.h"' % includeFile)
         if includeIndex != -1:
             s2 = open(fromdirname + "/" + "%s.h" % includeFile).read()
@@ -61,11 +61,12 @@ def convertFunc(fromdirname, filename, s):
     if filename in ("ge_add", "ge_madd", "ge_msub", "ge_p1p1_to_p2", "ge_p1p1_to_p3",
                     "ge_p2_0", "ge_p2_dbl", "ge_p3_0", "ge_p3_dbl", "ge_p3_to_cached",
                     "ge_p3_to_p2", "ge_p3_tobytes", "ge_precomp_0", "ge_sub", "ge_tobytes",
-                    "ge_double_scalarmult", "ge_p2_dbl", "ge_p3_dbl"):
+                    "ge_double_scalarmult", "ge_p2_dbl", "ge_p3_dbl", "ge_scalarmult_base"):
         funcsToExpand = ["fe_add", "fe_sub", "fe_mul", "fe_copy", "ge_p3_to_p2", "ge_p2_dbl",
                          "fe_invert", "fe_tobytes", "fe_isnegative", "fe_0", "fe_1", 
                          "ge_p1p1_to_p3", "ge_madd", "ge_sub", "ge_msub", "ge_p3_to_cached",
-                         "ge_add", "ge_p1p1_to_p2", "ge_p2_0", "ge_p3_dbl", "fe_sq", "fe_sq2"]
+                         "ge_add", "ge_p1p1_to_p2", "ge_p2_0", "ge_p3_dbl", "fe_sq", "fe_sq2",
+                         "fe_cmov", "ge_precomp_0", "fe_neg", "ge_p3_0"]
         funcsToExpand = [f for f in funcsToExpand if f != filename]
         for funcToExpand in funcsToExpand:
             s = s.replace(funcToExpand+"(", "%s.%s(" % (funcToExpand, funcToExpand))
