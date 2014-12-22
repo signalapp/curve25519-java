@@ -52,8 +52,6 @@ def convertFunc(fromdirname, filename, s):
     s = s.replace("static long", "public static long") # fe_frombytes
     s = s.replace("int fe", "public static int fe") # fe_isnegative
 
-    s = s.replace("fe_cswap", "fe_cmov") # scalarmult
-
     for includeFile in ("pow225521", "pow22523", "ge_add", "base2", "d2", "ge_sub", "d", "sqrtm1",
                         "ge_madd", "ge_msub", "ge_p2_dbl", "base", "montgomery"):
         includeIndex = s.find('#include "%s.h"' % includeFile)
@@ -76,7 +74,7 @@ def convertFunc(fromdirname, filename, s):
                          "ge_p1p1_to_p3", "ge_madd", "ge_sub", "ge_msub", "ge_p3_to_cached",
                          "ge_add", "ge_p1p1_to_p2", "ge_p2_0", "ge_p3_dbl", "fe_sq", "fe_sq2",
                          "fe_cmov", "ge_precomp_0", "fe_neg", "ge_p3_0", "fe_frombytes",
-                         "fe_mul121666"]
+                         "fe_mul121666", "fe_cswap"]
         funcsToExpand = [f for f in funcsToExpand if f != filename]
         for funcToExpand in funcsToExpand:
             s = s.replace(funcToExpand+"(", "%s.%s(" % (funcToExpand, funcToExpand))
@@ -136,6 +134,7 @@ def convertFiles(fromdirname, todirname):
         "ge_p3_to_cached",
         "ge_tobytes",
         "fe_mul121666",
+        "fe_cswap",
         "scalarmult"]
         
     for filename in filenames:

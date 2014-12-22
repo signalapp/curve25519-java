@@ -5,7 +5,7 @@ import java.util.Random;
 public class Test
 {
     public static void main(String[] args) {
-        int[] f = new int[10];
+/*         int[] f = new int[10];
         int[] g = new int[10];
         byte[] b1 = new byte[32];
         byte[] b2 = new byte[32];
@@ -24,4 +24,25 @@ public class Test
             }
         }
     }
+*/
+    byte[] p = new byte[32];
+    byte[] q = new byte[32];
+    byte[] n = new byte[32];
+
+    /* 2000 ECDH operations */
+    p[0] = 100;
+    n[0] = 100;
+    for (int count=0; count < 1000; count++) {
+        scalarmult.crypto_scalarmult(q, n, p);
+        System.arraycopy(q, 0, p, 0, 32);
+        scalarmult.crypto_scalarmult(q, n, p);
+        System.arraycopy(q, 0, n, 0, 32);
+    }
+
+    System.out.printf("\n");
+    for (int c=0; c<32; c++)
+      System.out.printf("%02x ", q[c]);
+    System.out.printf("\n");
+    }
+
 }

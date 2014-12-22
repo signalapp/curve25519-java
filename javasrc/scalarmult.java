@@ -5,7 +5,7 @@ public class scalarmult {
 //CONVERT #include "crypto_scalarmult.h"
 //CONVERT #include "fe.h"
 
-int crypto_scalarmult(byte[] q,
+public static int crypto_scalarmult(byte[] q,
   byte[] n,
   byte[] p)
 {
@@ -37,8 +37,8 @@ int crypto_scalarmult(byte[] q,
     b = e[pos / 8] >>> (pos & 7);
     b &= 1;
     swap ^= b;
-    fe_cmov.fe_cmov(x2,x3,swap);
-    fe_cmov.fe_cmov(z2,z3,swap);
+    fe_cswap.fe_cswap(x2,x3,swap);
+    fe_cswap.fe_cswap(z2,z3,swap);
     swap = b;
 //CONVERT #include "montgomery.h"
 
@@ -182,8 +182,8 @@ fe_mul.fe_mul(z2,tmp1,tmp0);
 
 /* qhasm: return */
   }
-  fe_cmov.fe_cmov(x2,x3,swap);
-  fe_cmov.fe_cmov(z2,z3,swap);
+  fe_cswap.fe_cswap(x2,x3,swap);
+  fe_cswap.fe_cswap(z2,z3,swap);
 
   fe_invert.fe_invert(z2,z2);
   fe_mul.fe_mul(x2,x2,z2);
