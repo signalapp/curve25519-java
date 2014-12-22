@@ -6,6 +6,13 @@ def convertFunc(fromdirname, filename, s):
     s = s.replace("fe t1;", "fe t1 = new int[10];")
     s = s.replace("fe t2;", "fe t2 = new int[10];")
     s = s.replace("fe t3;", "fe t3 = new int[10];")
+    s = s.replace("fe x1;", "fe x1 = new int[10];") # Curve25519
+    s = s.replace("fe x2;", "fe x2 = new int[10];")
+    s = s.replace("fe z2;", "fe z2 = new int[10];")
+    s = s.replace("fe x3;", "fe x3 = new int[10];")
+    s = s.replace("fe z3;", "fe z3 = new int[10];")
+    s = s.replace("fe tmp0;", "fe tmp0 = new int[10];")
+    s = s.replace("fe tmp1;", "fe tmp1 = new int[10];")
 
     s = s.replace("fe u;", "fe u = new int[10];") # ge_frombytes
     s = s.replace("fe v;", "fe v = new int[10];") # ge_frombytes
@@ -39,15 +46,16 @@ def convertFunc(fromdirname, filename, s):
     s = s.replace("unsigned char *", "byte[] ")
     s = s.replace("signed char *", "byte[] ") # for ge_double_scalarmult, has to be after prev line
 
-    s = s.replace("unsigned int", "int") # fe_cmov
-    s = s.replace("unsigned char", "int") # fe_cmov
+    s = s.replace("unsigned int", "int") # fe_cmov, elsewhere
     
     s = s.replace("void", "public static void")
     s = s.replace("static long", "public static long") # fe_frombytes
     s = s.replace("int fe", "public static int fe") # fe_isnegative
 
+    s = s.replace("fe_cswap", "fe_cmov") # scalarmult
+
     for includeFile in ("pow225521", "pow22523", "ge_add", "base2", "d2", "ge_sub", "d", "sqrtm1",
-                        "ge_madd", "ge_msub", "ge_p2_dbl", "base"):
+                        "ge_madd", "ge_msub", "ge_p2_dbl", "base", "montgomery"):
         includeIndex = s.find('#include "%s.h"' % includeFile)
         if includeIndex != -1:
             s2 = open(fromdirname + "/" + "%s.h" % includeFile).read()
@@ -61,12 +69,14 @@ def convertFunc(fromdirname, filename, s):
     if filename in ("ge_add", "ge_madd", "ge_msub", "ge_p1p1_to_p2", "ge_p1p1_to_p3",
                     "ge_p2_0", "ge_p2_dbl", "ge_p3_0", "ge_p3_dbl", "ge_p3_to_cached",
                     "ge_p3_to_p2", "ge_p3_tobytes", "ge_precomp_0", "ge_sub", "ge_tobytes",
-                    "ge_double_scalarmult", "ge_p2_dbl", "ge_p3_dbl", "ge_scalarmult_base"):
+                    "ge_double_scalarmult", "ge_p2_dbl", "ge_p3_dbl", "ge_scalarmult_base",
+                    "scalarmult"):
         funcsToExpand = ["fe_add", "fe_sub", "fe_mul", "fe_copy", "ge_p3_to_p2", "ge_p2_dbl",
                          "fe_invert", "fe_tobytes", "fe_isnegative", "fe_0", "fe_1", 
                          "ge_p1p1_to_p3", "ge_madd", "ge_sub", "ge_msub", "ge_p3_to_cached",
                          "ge_add", "ge_p1p1_to_p2", "ge_p2_0", "ge_p3_dbl", "fe_sq", "fe_sq2",
-                         "fe_cmov", "ge_precomp_0", "fe_neg", "ge_p3_0"]
+                         "fe_cmov", "ge_precomp_0", "fe_neg", "ge_p3_0", "fe_frombytes",
+                         "fe_mul121666"]
         funcsToExpand = [f for f in funcsToExpand if f != filename]
         for funcToExpand in funcsToExpand:
             s = s.replace(funcToExpand+"(", "%s.%s(" % (funcToExpand, funcToExpand))
@@ -124,7 +134,9 @@ def convertFiles(fromdirname, todirname):
         "ge_sub",
         "ge_p1p1_to_p2",
         "ge_p3_to_cached",
-        "ge_tobytes"]
+        "ge_tobytes",
+        "fe_mul121666",
+        "scalarmult"]
         
     for filename in filenames:
         s = convertFile(fromdirname, filename)
