@@ -1,21 +1,28 @@
 
-API
-----
- * javasrc.scalarmult.crypto_scalarmult()  # ECDH or key generation
+# DO NOT USE THIS YET
 
- * javasrc.curve_sigs.curve25519_keygen()  # Faster key generation
+## Generating a Curve25519 keypair:
 
- * javasrc.curve_sigs.curve25519_sign()
+```
+SecureRandom      secureRandom = SecureRandom.getInstance("SHA1PRNG");
+Curve25519KeyPair keyPair      = Curve25519.generateKeyPair();
+```
 
- * javasrc.curve_sigs.curve25519_verify()
+## Calculating a shared secret:
 
-Testing
---------
-Run 'make java' and 'make test' to build and test the java.
+```
+byte[] sharedSecret = Curve25519.calculateAgreement(publicKey, privateKey);
+```
 
-Porting
---------
-Run 'make convert' to convert c files in ref10_extract/ into java in generated/.
+## Calculating a signature:
 
-After some manual fixup, the files are placed in javasrc/.
+```
+SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+byte[]       signature    = Curve25519.calculateSignature(secureRandom, privateKey, message);
+```
 
+## Verifying a signature:
+
+```
+boolean validSignature = Curve25519.verifySignature(publicKey, message, signature);
+```
