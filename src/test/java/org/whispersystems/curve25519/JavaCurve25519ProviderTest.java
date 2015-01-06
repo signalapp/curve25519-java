@@ -43,11 +43,14 @@ public class JavaCurve25519ProviderTest {
     p[0] = 100;
     n[0] = 100;
 
+    n = provider.generatePrivateKey(n);
+
     for (int count=0; count < 1000; count++) {
       q = provider.calculateAgreement(n, p);
       System.arraycopy(q, 0, p, 0, 32);
       q = provider.calculateAgreement(n, p);
       System.arraycopy(q, 0, n, 0, 32);
+      n = provider.generatePrivateKey(n);
     }
 
     byte[] result = new byte[]{(byte)0xce, (byte)0xb4, (byte)0x4e, (byte)0xd6, (byte)0x4a,

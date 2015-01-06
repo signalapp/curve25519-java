@@ -23,9 +23,9 @@ public static int crypto_scalarmult(byte[] q,
   int b;
 
   for (i = 0;i < 32;++i) e[i] = n[i];
-  e[0] &= 248;
-  e[31] &= 127;
-  e[31] |= 64;
+//  e[0] &= 248;
+//  e[31] &= 127;
+//  e[31] |= 64;
   fe_frombytes.fe_frombytes(x1,p);
   fe_1.fe_1(x2);
   fe_0.fe_0(z2);
