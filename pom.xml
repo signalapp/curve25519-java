@@ -118,7 +118,7 @@
                         <configuration>
                             <sources>
                                 <source>src/commonTest/java/</source>
-                                <source>src/gitest/java/</source>
+                                <source>src/javaTest/java/</source>
                             </sources>
                         </configuration>
                     </execution>
