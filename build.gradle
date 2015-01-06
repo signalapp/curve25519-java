@@ -1,0 +1,95 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.0.0'
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+archivesBaseName = "curve25519-android"
+version          = "0.0.1"
+group            = "org.whispersystems"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    androidTestCompile 'junit:junit:4.11'
+}
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion '21.1.1'
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
+    android {
+        sourceSets {
+            main {
+                jniLibs.srcDirs = ['libs']
+            }
+            androidTest {
+                java.srcDirs = ['src/androidTest/java', 'src/commonTest/java']
+            }
+        }
+        packagingOptions {
+            exclude 'LICENSE.txt'
+        }
+    }
+
+    libraryVariants.all { variant ->
+        variant.outputs.each { output ->
+            def outputFile = output.outputFile
+            if (outputFile != null && outputFile.name.endsWith('.aar')) {
+                def fileName = "${archivesBaseName}-${version}.aar"
+                output.outputFile = new File(outputFile.parent, fileName)
+            }
+        }
+    }
+}
+
+signing {
+    required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+}
+
+uploadArchives {
+    configuration = configurations.archives
+    repositories.mavenDeployer {
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+        repository(url: sonatypeRepo) {
+            authentication(userName: whisperSonatypeUsername, password: whisperSonatypePassword)
+        }
+
+        pom.project {
+            name 'curve25519-android'
+            packaging 'aar'
+            description 'Curve25519 library for Android'
+            url 'https://github.com/WhisperSystems/curve25519-java'
+
+            scm {
+                url 'scm:git@github.com:WhisperSystems/curve25519-java.git'
+                connection 'scm:git@github.com:WhisperSystems/curve25519-java.git'
+                developerConnection 'scm:git@github.com:WhisperSystems/curve25519-java.git'
+            }
+
+            developers {
+                developer {
+                    name 'Trevor Perrin'
+                    name 'Moxie Marlinspike'
+                }
+            }
+        }
+    }
+}

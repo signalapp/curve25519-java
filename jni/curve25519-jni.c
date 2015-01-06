@@ -22,8 +22,8 @@
 #include "curve25519-donna.h"
 #include "curve_sigs.h"
 
-JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_libaxolotl_ecc_Curve25519_generatePrivateKey
-  (JNIEnv *env, jclass clazz, jbyteArray random)
+JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_generatePrivateKey
+  (JNIEnv *env, jobject obj, jbyteArray random)
 {
   uint8_t* privateKey = (uint8_t*)(*env)->GetByteArrayElements(env, random, 0);
 
@@ -36,8 +36,8 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_libaxolotl_ecc_Curve25519_g
   return random;
 }
 
-JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_libaxolotl_ecc_Curve25519_generatePublicKey
-  (JNIEnv *env, jclass clazz, jbyteArray privateKey)
+JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_generatePublicKey
+  (JNIEnv *env, jobject obj, jbyteArray privateKey)
 {
     static const uint8_t  basepoint[32] = {9};
 
@@ -53,8 +53,8 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_libaxolotl_ecc_Curve25519_g
     return publicKey;
 }
 
-JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_libaxolotl_ecc_Curve25519_calculateAgreement
-  (JNIEnv *env, jclass clazz, jbyteArray privateKey, jbyteArray publicKey)
+JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_calculateAgreement
+  (JNIEnv *env, jobject obj, jbyteArray privateKey, jbyteArray publicKey)
 {
     jbyteArray sharedKey       = (*env)->NewByteArray(env, 32);
     uint8_t*   sharedKeyBytes  = (uint8_t*)(*env)->GetByteArrayElements(env, sharedKey, 0);
@@ -70,8 +70,8 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_libaxolotl_ecc_Curve25519_c
     return sharedKey;
 }
 
-JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_libaxolotl_ecc_Curve25519_calculateSignature
-  (JNIEnv *env, jclass clazz, jbyteArray random, jbyteArray privateKey, jbyteArray message)
+JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_calculateSignature
+  (JNIEnv *env, jobject obj, jbyteArray random, jbyteArray privateKey, jbyteArray message)
 {
     jbyteArray signature       = (*env)->NewByteArray(env, 64);
     uint8_t*   signatureBytes  = (uint8_t*)(*env)->GetByteArrayElements(env, signature, 0);
@@ -91,8 +91,8 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_libaxolotl_ecc_Curve25519_c
     else             (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/AssertionError"), "Signature failed!");
 }
 
-JNIEXPORT jboolean JNICALL Java_org_whispersystems_libaxolotl_ecc_Curve25519_verifySignature
-  (JNIEnv *env, jclass clazz, jbyteArray publicKey, jbyteArray message, jbyteArray signature)
+JNIEXPORT jboolean JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_verifySignature
+  (JNIEnv *env, jobject obj, jbyteArray publicKey, jbyteArray message, jbyteArray signature)
 {
     uint8_t*   signatureBytes = (uint8_t*)(*env)->GetByteArrayElements(env, signature, 0);
     uint8_t*   publicKeyBytes = (uint8_t*)(*env)->GetByteArrayElements(env, publicKey, 0);

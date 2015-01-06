@@ -1,9 +1,14 @@
 package org.whispersystems.curve25519;
 
-public class NativeCurve25519Provider implements Curve25519Provider {
+class NativeCurve25519Provider implements Curve25519Provider {
 
   static {
     System.loadLibrary("curve25519");
+  }
+
+  @Override
+  public boolean isNative() {
+    return true;
   }
 
   @Override

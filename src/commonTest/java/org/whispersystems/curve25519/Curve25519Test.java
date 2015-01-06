@@ -1,6 +1,8 @@
 package org.whispersystems.curve25519;
 
 import org.junit.Test;
+import org.whispersystems.curve25519.Curve25519;
+import org.whispersystems.curve25519.Curve25519KeyPair;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -9,7 +11,10 @@ import java.security.SecureRandom;
 import static org.junit.Assert.assertArrayEquals;
 
 
-public class Curve25519Test {
+public abstract class Curve25519Test {
+
+  @Test
+  public abstract void testCheckProvider();
 
   @Test
   public void testAgreement() {

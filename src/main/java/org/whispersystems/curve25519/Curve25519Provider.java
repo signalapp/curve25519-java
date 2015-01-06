@@ -1,7 +1,8 @@
 package org.whispersystems.curve25519;
 
-public interface Curve25519Provider {
+interface Curve25519Provider {
 
+  boolean isNative();
   byte[] calculateAgreement(byte[] ourPrivate, byte[] theirPublic);
   byte[] generatePublicKey(byte[] privateKey);
   byte[] generatePrivateKey(byte[] random);

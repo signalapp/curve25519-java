@@ -14,6 +14,10 @@ public class Curve25519 {
     }
   }
 
+  public static boolean isNative() {
+    return provider.isNative();
+  }
+
   public static Curve25519KeyPair generateKeyPair(SecureRandom secureRandom) {
     byte[] privateKey = generatePrivateKey(secureRandom);
     byte[] publicKey  = provider.generatePublicKey(privateKey);

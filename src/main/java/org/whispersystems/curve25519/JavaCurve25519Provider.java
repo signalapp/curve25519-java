@@ -3,7 +3,12 @@ package org.whispersystems.curve25519;
 import org.whispersystems.curve25519.java.curve_sigs;
 import org.whispersystems.curve25519.java.scalarmult;
 
-public class JavaCurve25519Provider implements Curve25519Provider {
+class JavaCurve25519Provider implements Curve25519Provider {
+
+  @Override
+  public boolean isNative() {
+    return false;
+  }
 
   @Override
   public byte[] calculateAgreement(byte[] ourPrivate, byte[] theirPublic) {
