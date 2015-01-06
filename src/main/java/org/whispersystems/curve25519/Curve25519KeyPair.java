@@ -1,5 +1,10 @@
 package org.whispersystems.curve25519;
 
+/**
+ * A tuple that contains a Curve25519 public and private key.
+ *
+ * @author Moxie Marlinspike
+ */
 public class Curve25519KeyPair {
 
   private final byte[] publicKey;
@@ -10,10 +15,16 @@ public class Curve25519KeyPair {
     this.privateKey = privateKey;
   }
 
+  /**
+   * @return The Curve25519 public key.
+   */
   public byte[] getPublicKey() {
     return publicKey;
   }
 
+  /**
+   * @return The Curve25519 private key.
+   */
   public byte[] getPrivateKey() {
     return privateKey;
   }
