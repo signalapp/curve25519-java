@@ -1,0 +1,63 @@
+apply plugin: 'java'
+
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+sourceCompatibility = 1.7
+archivesBaseName = "curve25519-java"
+version          = version_number
+group            = group_info
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile project(':tests')
+}
+
+signing {
+    required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+}
+
+uploadArchives {
+    configuration = configurations.archives
+    repositories.mavenDeployer {
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+        repository(url: sonatypeRepo) {
+            authentication(userName: whisperSonatypeUsername, password: whisperSonatypePassword)
+        }
+
+        pom.project {
+            name 'curve25519-java'
+            packaging 'jar'
+            description 'Curve25519 library for Java'
+            url 'https://github.com/WhisperSystems/curve25519-java'
+
+            scm {
+                url 'scm:git@github.com:WhisperSystems/curve25519-java.git'
+                connection 'scm:git@github.com:WhisperSystems/curve25519-java.git'
+                developerConnection 'scm:git@github.com:WhisperSystems/curve25519-java.git'
+            }
+
+            developers {
+                developer {
+                    name 'Trevor Perrin'
+                    name 'Moxie Marlinspike'
+                }
+            }
+        }
+    }
+}
+
+task installArchives(type: Upload) {
+    description "Installs the artifacts to the local Maven repository."
+    configuration = configurations['archives']
+    repositories {
+        mavenDeployer {
+            repository url: "file://${System.properties['user.home']}/.m2/repository"
+        }
+    }
+}

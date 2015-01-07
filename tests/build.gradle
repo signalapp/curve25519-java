@@ -1,0 +1,13 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.7
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile project(':java')
+    compile 'junit:junit:3.8.2'
+    compile 'org.easytesting:fest-assert:1.4'
+}

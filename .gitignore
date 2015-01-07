@@ -4,3 +4,4 @@ target/
 obj/
 build/
 .gradle/
+local.properties

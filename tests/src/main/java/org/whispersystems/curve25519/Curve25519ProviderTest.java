@@ -1,16 +1,13 @@
 package org.whispersystems.curve25519;
 
-import org.junit.Test;
-import org.whispersystems.curve25519.Curve25519Provider;
+import junit.framework.TestCase;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
+import static org.fest.assertions.Assertions.assertThat;
 
-public abstract class Curve25519ProviderTest {
+public abstract class Curve25519ProviderTest extends TestCase {
 
   protected abstract Curve25519Provider createProvider();
 
-  @Test
   public void testKeyGen() {
     Curve25519Provider provider = createProvider();
 
@@ -32,10 +29,9 @@ public abstract class Curve25519ProviderTest {
                                 (byte)0xdd, (byte)0xfa, (byte)0x05, (byte)0xf8, (byte)0xbc,
                                 (byte)0x7f, (byte)0x37};
 
-    assertArrayEquals(out, result2);
+    assertThat(out).isEqualTo(result2);
   }
 
-  @Test
   public void testEcDh() {
     Curve25519Provider provider = createProvider();
 
@@ -64,12 +60,11 @@ public abstract class Curve25519ProviderTest {
                                (byte)0x1b, (byte)0x4b, (byte)0x13, (byte)0x8d, (byte)0x17,
                                (byte)0xf9, (byte)0x34};
 
-    assertArrayEquals(q, result);
+    assertThat(q).isEqualTo(result);
   }
 
   // FIXME: There's no actual vector here.  If verifySignature is broken and always returns true,
   // this test will pass.
-  @Test
   public void testSignVerify() {
     Curve25519Provider provider = createProvider();
 

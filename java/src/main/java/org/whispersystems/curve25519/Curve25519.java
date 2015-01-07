@@ -21,7 +21,7 @@ public class Curve25519 {
   }
 
   /**
-   * {@link org.whispersystems.curve25519.Curve25519} is backed by either a native (via JNI)
+   * {@link Curve25519} is backed by either a native (via JNI)
    * or pure-Java provider.  By default it prefers the native provider, and falls back to the
    * pure-Java provider if the native library fails to load.
    *

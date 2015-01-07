@@ -1,22 +1,18 @@
 package org.whispersystems.curve25519;
 
-import org.junit.Test;
-import org.whispersystems.curve25519.Curve25519;
-import org.whispersystems.curve25519.Curve25519KeyPair;
+import junit.framework.TestCase;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.fest.assertions.Assertions.assertThat;
 
 
-public abstract class Curve25519Test {
+public abstract class Curve25519Test extends TestCase {
 
-  @Test
   public abstract void testCheckProvider();
 
-  @Test
   public void testAgreement() {
 
     byte[] alicePublic  = {(byte) 0x1b, (byte) 0xb7, (byte) 0x59, (byte) 0x66,
@@ -62,11 +58,10 @@ public abstract class Curve25519Test {
     byte[] sharedOne = Curve25519.calculateAgreement(bobPublic, alicePrivate);
     byte[] sharedTwo = Curve25519.calculateAgreement(alicePublic, bobPrivate);
 
-    assertArrayEquals(sharedOne, shared);
-    assertArrayEquals(sharedTwo, shared);
+    assertThat(sharedOne).isEqualTo(shared);
+    assertThat(sharedTwo).isEqualTo(shared);
   }
 
-  @Test
   public void testRandomAgreements() throws NoSuchAlgorithmException {
     SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
 
@@ -77,11 +72,10 @@ public abstract class Curve25519Test {
       byte[] sharedAlice = Curve25519.calculateAgreement(bob.getPublicKey(), alice.getPrivateKey());
       byte[] sharedBob   = Curve25519.calculateAgreement(alice.getPublicKey(), bob.getPrivateKey());
 
-      assertArrayEquals(sharedAlice, sharedBob);
+      assertThat(sharedAlice).isEqualTo(sharedBob);
     }
   }
 
-  @Test
   public void testSignature() {
     byte[] aliceIdentityPrivate = {(byte)0xc0, (byte)0x97, (byte)0x24, (byte)0x84, (byte)0x12,
                                    (byte)0xe5, (byte)0x8b, (byte)0xf0, (byte)0x5d, (byte)0xf4,
@@ -137,7 +131,6 @@ public abstract class Curve25519Test {
     }
   }
 
-  @Test
   public void testSignatureOverflow() throws NoSuchAlgorithmException, InvalidKeyException {
     SecureRandom      secureRandom = SecureRandom.getInstance("SHA1PRNG");
     Curve25519KeyPair keys         = Curve25519.generateKeyPair(secureRandom);
