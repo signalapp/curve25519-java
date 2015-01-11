@@ -1,1 +1,1 @@
-include ':java', ':android', ':tests'
+include ':java', ':android', ':j2me', ':common', ':tests'

@@ -13,6 +13,7 @@ repositories {
 }
 
 dependencies {
+    compile project(':common')
     testCompile project(':tests')
 }
 

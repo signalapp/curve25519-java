@@ -11,3 +11,12 @@ dependencies {
     compile 'junit:junit:3.8.2'
     compile 'org.easytesting:fest-assert:1.4'
 }
+
+test {
+    testLogging {
+        events 'passed'
+        showStandardStreams = true
+    }
+
+    include 'org/whispersystems/**'
+}

@@ -11,9 +11,10 @@ import static org.fest.assertions.Assertions.assertThat;
 
 public abstract class Curve25519Test extends TestCase {
 
-  public abstract void testCheckProvider();
+  public abstract void testCheckProvider() throws NoSuchProviderException;
+  public abstract String getProviderName();
 
-  public void testAgreement() {
+  public void testAgreement() throws NoSuchProviderException {
 
     byte[] alicePublic  = {(byte) 0x1b, (byte) 0xb7, (byte) 0x59, (byte) 0x66,
                            (byte) 0xf2, (byte) 0xe9, (byte) 0x3a, (byte) 0x36, (byte) 0x91,
@@ -55,28 +56,26 @@ public abstract class Curve25519Test extends TestCase {
                            (byte) 0xdd, (byte) 0x7c, (byte) 0xa4, (byte) 0xc4, (byte) 0x77,
                            (byte) 0xe6, (byte) 0x29};
 
-    byte[] sharedOne = Curve25519.calculateAgreement(bobPublic, alicePrivate);
-    byte[] sharedTwo = Curve25519.calculateAgreement(alicePublic, bobPrivate);
+    byte[] sharedOne = Curve25519.getInstance(getProviderName()).calculateAgreement(bobPublic, alicePrivate);
+    byte[] sharedTwo = Curve25519.getInstance(getProviderName()).calculateAgreement(alicePublic, bobPrivate);
 
     assertThat(sharedOne).isEqualTo(shared);
     assertThat(sharedTwo).isEqualTo(shared);
   }
 
-  public void testRandomAgreements() throws NoSuchAlgorithmException {
-    SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-
+  public void testRandomAgreements() throws NoSuchAlgorithmException, NoSuchProviderException {
     for (int i=0;i<50;i++) {
-      Curve25519KeyPair alice = Curve25519.generateKeyPair(secureRandom);
-      Curve25519KeyPair bob   = Curve25519.generateKeyPair(secureRandom);
+      Curve25519KeyPair alice = Curve25519.getInstance(getProviderName()).generateKeyPair();
+      Curve25519KeyPair bob   = Curve25519.getInstance(getProviderName()).generateKeyPair();
 
-      byte[] sharedAlice = Curve25519.calculateAgreement(bob.getPublicKey(), alice.getPrivateKey());
-      byte[] sharedBob   = Curve25519.calculateAgreement(alice.getPublicKey(), bob.getPrivateKey());
+      byte[] sharedAlice = Curve25519.getInstance(getProviderName()).calculateAgreement(bob.getPublicKey(), alice.getPrivateKey());
+      byte[] sharedBob   = Curve25519.getInstance(getProviderName()).calculateAgreement(alice.getPublicKey(), bob.getPrivateKey());
 
       assertThat(sharedAlice).isEqualTo(sharedBob);
     }
   }
 
-  public void testSignature() {
+  public void testSignature() throws NoSuchProviderException {
     byte[] aliceIdentityPrivate = {(byte)0xc0, (byte)0x97, (byte)0x24, (byte)0x84, (byte)0x12,
                                    (byte)0xe5, (byte)0x8b, (byte)0xf0, (byte)0x5d, (byte)0xf4,
                                    (byte)0x87, (byte)0x96, (byte)0x82, (byte)0x05, (byte)0x13,
@@ -115,7 +114,7 @@ public abstract class Curve25519Test extends TestCase {
                                    (byte)0x86, (byte)0xce, (byte)0xf0, (byte)0x47, (byte)0xbd,
                                    (byte)0x60, (byte)0xb8, (byte)0x6e, (byte)0x88};
 
-    if (!Curve25519.verifySignature(aliceIdentityPublic, aliceEphemeralPublic, aliceSignature)) {
+    if (!Curve25519.getInstance(getProviderName()).verifySignature(aliceIdentityPublic, aliceEphemeralPublic, aliceSignature)) {
       throw new AssertionError("Sig verification failed!");
     }
 
@@ -125,19 +124,18 @@ public abstract class Curve25519Test extends TestCase {
 
       modifiedSignature[i] ^= 0x01;
 
-      if (Curve25519.verifySignature(aliceIdentityPublic, aliceEphemeralPublic, modifiedSignature)) {
+      if (Curve25519.getInstance(getProviderName()).verifySignature(aliceIdentityPublic, aliceEphemeralPublic, modifiedSignature)) {
         throw new AssertionError("Sig verification succeeded!");
       }
     }
   }
 
-  public void testSignatureOverflow() throws NoSuchAlgorithmException, InvalidKeyException {
-    SecureRandom      secureRandom = SecureRandom.getInstance("SHA1PRNG");
-    Curve25519KeyPair keys         = Curve25519.generateKeyPair(secureRandom);
+  public void testSignatureOverflow() throws NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException {
+    Curve25519KeyPair keys         = Curve25519.getInstance(getProviderName()).generateKeyPair();
     byte[]            message      = new byte[4096];
 
     try {
-      byte[] signature = Curve25519.calculateSignature(secureRandom, keys.getPrivateKey(), message);
+      byte[] signature = Curve25519.getInstance(getProviderName()).calculateSignature(keys.getPrivateKey(), message);
       throw new InvalidKeyException("Should have asserted!");
     } catch (AssertionError e) {
       // Success!

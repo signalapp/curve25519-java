@@ -37,7 +37,7 @@ public class curve_sigs {
       fe_tobytes.fe_tobytes(curve25519_pubkey_out, mont_x);
     }
 
-    public static int curve25519_sign(byte[] signature_out,
+    public static int curve25519_sign(Sha512 sha512provider, byte[] signature_out,
                         byte[] curve25519_privkey,
                         byte[] msg, long msg_len,
                         byte[] random)
@@ -48,7 +48,7 @@ public class curve_sigs {
       byte sign_bit = 0;
 
       if (msg_len > MAX_MSG_LEN) {
-        java.util.Arrays.fill(signature_out, (byte)0);
+        Arrays.fill(signature_out, (byte)0);
         return -1;
       }
 
@@ -58,7 +58,7 @@ public class curve_sigs {
       sign_bit = (byte)(ed_pubkey[31] & 0x80);
 
       /* Perform an Ed25519 signature with explicit private key */
-      sign_modified.crypto_sign_modified(sigbuf, msg, msg_len, curve25519_privkey,
+      sign_modified.crypto_sign_modified(sha512provider, sigbuf, msg, msg_len, curve25519_privkey,
                                          ed_pubkey, random);
       System.arraycopy(sigbuf, 0, signature_out, 0, 64);
 
@@ -68,7 +68,7 @@ public class curve_sigs {
        return 0;
     }
 
-    public static int curve25519_verify(byte[] signature,
+    public static int curve25519_verify(Sha512 sha512provider, byte[] signature,
                           byte[] curve25519_pubkey,
                           byte[] msg, long msg_len)
     {
@@ -119,6 +119,6 @@ public class curve_sigs {
       /* verifybuf2 = java to next call gets a copy of verifybuf, S gets
          replaced with pubkey for hashing, then the whole thing gets zeroized
          (if bad sig), or contains a copy of msg (good sig) */
-      return open.crypto_sign_open(verifybuf2, some_retval, verifybuf, 64 + msg_len, ed_pubkey);
+      return open.crypto_sign_open(sha512provider, verifybuf2, some_retval, verifybuf, 64 + msg_len, ed_pubkey);
     }
 }

@@ -10,6 +10,7 @@ public class open {
 //CONVERT #include "sc.h"
 
 public static int crypto_sign_open(
+  Sha512 sha512provider,
   byte[] m, long mlen,
   byte[] sm, long smlen,
   byte[] pk
@@ -28,7 +29,7 @@ public static int crypto_sign_open(
   if (ge_frombytes.ge_frombytes_negate_vartime(A,pk) != 0) return -1;
 
   byte[] pubkeyhash = new byte[64];
-  crypto_hash_sha512.crypto_hash_sha512(pubkeyhash,pk,32);
+  sha512provider.calculateDigest(pubkeyhash,pk,32);
 
   System.arraycopy(pk, 0, pkcopy, 0, 32);
   System.arraycopy(sm, 0, rcopy, 0, 32);
@@ -36,7 +37,7 @@ public static int crypto_sign_open(
 
   System.arraycopy(sm, 0, m, 0, (int)smlen);
   System.arraycopy(pkcopy, 0, m, 32, 32);
-  crypto_hash_sha512.crypto_hash_sha512(h,m,smlen);
+  sha512provider.calculateDigest(h,m,smlen);
   sc_reduce.sc_reduce(h);
 
   ge_double_scalarmult.ge_double_scalarmult_vartime(R,h,A,scopy);

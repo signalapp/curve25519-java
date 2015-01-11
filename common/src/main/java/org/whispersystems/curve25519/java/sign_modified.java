@@ -14,6 +14,7 @@ public class sign_modified {
    instead of deriving both from a master key.
 */
 static int crypto_sign_modified (
+  Sha512 sha512provider,
   byte[] sm,
   byte[] m, long mlen,
   byte[] sk, byte[] pk,
@@ -36,14 +37,14 @@ static int crypto_sign_modified (
   /* NEW: add suffix of random data */
   System.arraycopy(random, 0, sm, (int)(mlen + 64), 64);
 
-  crypto_hash_sha512.crypto_hash_sha512(nonce,sm,mlen + 128);
+  sha512provider.calculateDigest(nonce,sm,mlen + 128);
   System.arraycopy(pk, 0, sm, 32, 32);
 
   sc_reduce.sc_reduce(nonce);
   ge_scalarmult_base.ge_scalarmult_base(R,nonce);
   ge_p3_tobytes.ge_p3_tobytes(sm,R);
 
-  crypto_hash_sha512.crypto_hash_sha512(hram,sm,mlen + 64);
+  sha512provider.calculateDigest(hram,sm,mlen + 64);
   sc_reduce.sc_reduce(hram);
   byte[] S = new byte[32];
   sc_muladd.sc_muladd(S,hram,sk,nonce); /* NEW: Use privkey directly */

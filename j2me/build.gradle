@@ -1,0 +1,12 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.2
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.bouncycastle:bcprov-jdk12:130'
+    compile project(':common')
+}

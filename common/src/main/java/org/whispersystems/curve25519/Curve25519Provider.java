@@ -18,10 +18,14 @@ package org.whispersystems.curve25519;
 
 interface Curve25519Provider {
 
+  static final int PRIVATE_KEY_LEN = 32;
+
   boolean isNative();
   byte[] calculateAgreement(byte[] ourPrivate, byte[] theirPublic);
   byte[] generatePublicKey(byte[] privateKey);
+  byte[] generatePrivateKey();
   byte[] generatePrivateKey(byte[] random);
+  byte[] getRandom(int length);
 
   byte[]  calculateSignature(byte[] random, byte[] privateKey, byte[] message);
   boolean verifySignature(byte[] publicKey, byte[] message, byte[] signature);

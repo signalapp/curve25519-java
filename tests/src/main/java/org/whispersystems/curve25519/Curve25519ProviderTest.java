@@ -6,9 +6,9 @@ import static org.fest.assertions.Assertions.assertThat;
 
 public abstract class Curve25519ProviderTest extends TestCase {
 
-  protected abstract Curve25519Provider createProvider();
+  protected abstract Curve25519Provider createProvider() throws NoSuchProviderException;
 
-  public void testKeyGen() {
+  public void testKeyGen() throws NoSuchProviderException {
     Curve25519Provider provider = createProvider();
 
     byte[] in  = new byte[32];
@@ -32,7 +32,7 @@ public abstract class Curve25519ProviderTest extends TestCase {
     assertThat(out).isEqualTo(result2);
   }
 
-  public void testEcDh() {
+  public void testEcDh() throws NoSuchProviderException {
     Curve25519Provider provider = createProvider();
 
     byte[] p = new byte[32];
@@ -65,7 +65,7 @@ public abstract class Curve25519ProviderTest extends TestCase {
 
   // FIXME: There's no actual vector here.  If verifySignature is broken and always returns true,
   // this test will pass.
-  public void testSignVerify() {
+  public void testSignVerify() throws NoSuchProviderException {
     Curve25519Provider provider = createProvider();
 
     byte[] msg     = new byte[100];

@@ -16,15 +16,54 @@
  */
 package org.whispersystems.curve25519;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+
 class NativeCurve25519Provider implements Curve25519Provider {
 
+  private static boolean   libraryPresent         = false;
+  private static Throwable libraryFailedException = null;
+
   static {
-    System.loadLibrary("curve25519");
+    try {
+      System.loadLibrary("curve25519");
+      libraryPresent = true;
+    } catch (UnsatisfiedLinkError | SecurityException e) {
+      libraryPresent         = false;
+      libraryFailedException = e;
+    }
+  }
+
+  NativeCurve25519Provider() throws NoSuchProviderException {
+    if (!libraryPresent) throw new NoSuchProviderException(libraryFailedException);
   }
 
   @Override
   public boolean isNative() {
     return true;
+  }
+
+  @Override
+  public byte[] generatePrivateKey() {
+    byte[] random = getRandom(PRIVATE_KEY_LEN);
+    return generatePrivateKey(random);
+  }
+
+  @Override
+  public byte[] getRandom(int length) {
+    byte[] result = new byte[length];
+    setRandom(result);
+
+    return result;
+  }
+
+  private void setRandom(byte[] output) {
+    try {
+      SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+      secureRandom.nextBytes(output);
+    } catch (NoSuchAlgorithmException e) {
+      throw new AssertionError(e);
+    }
   }
 
   @Override
