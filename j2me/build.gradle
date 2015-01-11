@@ -6,7 +6,14 @@ repositories {
     mavenCentral()
 }
 
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', project(':common').file('src/main/java')]
+        }
+    }
+}
+
 dependencies {
     compile 'org.bouncycastle:bcprov-jdk12:130'
-    compile project(':common')
 }

@@ -12,8 +12,15 @@ repositories {
     mavenCentral()
 }
 
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', project(':common').file('src/main/java')]
+        }
+    }
+}
+
 dependencies {
-    compile project(':common')
     testCompile project(':tests')
 }
 
