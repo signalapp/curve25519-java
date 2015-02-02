@@ -56,8 +56,8 @@ public abstract class Curve25519Test extends TestCase {
                            (byte) 0xdd, (byte) 0x7c, (byte) 0xa4, (byte) 0xc4, (byte) 0x77,
                            (byte) 0xe6, (byte) 0x29};
 
-    byte[] sharedOne = Curve25519.getInstance(getProviderName()).calculateAgreement(bobPublic, alicePrivate);
-    byte[] sharedTwo = Curve25519.getInstance(getProviderName()).calculateAgreement(alicePublic, bobPrivate);
+    byte[] sharedOne = getInstance().calculateAgreement(bobPublic, alicePrivate);
+    byte[] sharedTwo = getInstance().calculateAgreement(alicePublic, bobPrivate);
 
     assertThat(sharedOne).isEqualTo(shared);
     assertThat(sharedTwo).isEqualTo(shared);
@@ -65,11 +65,11 @@ public abstract class Curve25519Test extends TestCase {
 
   public void testRandomAgreements() throws NoSuchAlgorithmException, NoSuchProviderException {
     for (int i=0;i<50;i++) {
-      Curve25519KeyPair alice = Curve25519.getInstance(getProviderName()).generateKeyPair();
-      Curve25519KeyPair bob   = Curve25519.getInstance(getProviderName()).generateKeyPair();
+      Curve25519KeyPair alice = getInstance().generateKeyPair();
+      Curve25519KeyPair bob   = getInstance().generateKeyPair();
 
-      byte[] sharedAlice = Curve25519.getInstance(getProviderName()).calculateAgreement(bob.getPublicKey(), alice.getPrivateKey());
-      byte[] sharedBob   = Curve25519.getInstance(getProviderName()).calculateAgreement(alice.getPublicKey(), bob.getPrivateKey());
+      byte[] sharedAlice = getInstance().calculateAgreement(bob.getPublicKey(), alice.getPrivateKey());
+      byte[] sharedBob   = getInstance().calculateAgreement(alice.getPublicKey(), bob.getPrivateKey());
 
       assertThat(sharedAlice).isEqualTo(sharedBob);
     }
@@ -114,7 +114,7 @@ public abstract class Curve25519Test extends TestCase {
                                    (byte)0x86, (byte)0xce, (byte)0xf0, (byte)0x47, (byte)0xbd,
                                    (byte)0x60, (byte)0xb8, (byte)0x6e, (byte)0x88};
 
-    if (!Curve25519.getInstance(getProviderName()).verifySignature(aliceIdentityPublic, aliceEphemeralPublic, aliceSignature)) {
+    if (!getInstance().verifySignature(aliceIdentityPublic, aliceEphemeralPublic, aliceSignature)) {
       throw new AssertionError("Sig verification failed!");
     }
 
@@ -124,24 +124,28 @@ public abstract class Curve25519Test extends TestCase {
 
       modifiedSignature[i] ^= 0x01;
 
-      if (Curve25519.getInstance(getProviderName()).verifySignature(aliceIdentityPublic, aliceEphemeralPublic, modifiedSignature)) {
+      if (getInstance().verifySignature(aliceIdentityPublic, aliceEphemeralPublic, modifiedSignature)) {
         throw new AssertionError("Sig verification succeeded!");
       }
     }
   }
 
   public void testSignatureOverflow() throws NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException {
-    Curve25519KeyPair keys         = Curve25519.getInstance(getProviderName()).generateKeyPair();
+    Curve25519KeyPair keys         = getInstance().generateKeyPair();
     byte[]            message      = new byte[4096];
 
     try {
-      byte[] signature = Curve25519.getInstance(getProviderName()).calculateSignature(keys.getPrivateKey(), message);
+      byte[] signature = getInstance().calculateSignature(keys.getPrivateKey(), message);
       throw new InvalidKeyException("Should have asserted!");
     } catch (AssertionError e) {
       // Success!
     } catch (IllegalArgumentException iae) {
       // Success !
     }
+  }
+
+  protected Curve25519 getInstance() throws NoSuchProviderException {
+    return Curve25519.getInstance(getProviderName());
   }
 
 
