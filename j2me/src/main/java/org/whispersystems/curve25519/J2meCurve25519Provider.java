@@ -6,7 +6,7 @@ public class J2meCurve25519Provider extends BaseJavaCurve25519Provider {
     super(new BouncyCastleSha512Provider(), new NullSecureRandomProvider());
   }
 
-  @Override
+//  @Override
   public boolean isNative() {
     return false;
   }
