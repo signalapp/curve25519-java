@@ -7,23 +7,13 @@ import java.security.SecureRandom;
 
 public class JavaCurve25519Provider extends BaseJavaCurve25519Provider {
 
-  private final JCESha512Provider sha512Provider = new JCESha512Provider();
-
-  @Override
-  protected Sha512 getSha512() {
-    return sha512Provider;
+  protected JavaCurve25519Provider() {
+    super(new JCESha512Provider(), new JCESecureRandomProvider());
   }
 
   @Override
-  public byte[] getRandom(int length) {
-    try {
-      byte[]       random       = new byte[length];
-      SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-      secureRandom.nextBytes(random);
-
-      return random;
-    } catch (NoSuchAlgorithmException e) {
-      throw new AssertionError(e);
-    }
+  public boolean isNative() {
+    return false;
   }
+
 }

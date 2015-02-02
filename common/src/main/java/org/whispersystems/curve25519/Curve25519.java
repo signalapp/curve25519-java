@@ -30,10 +30,16 @@ public class Curve25519 {
   public static final String BEST   = "best";
 
   public static Curve25519 getInstance(String type) throws NoSuchProviderException {
-    if      (NATIVE.equals(type)) return new Curve25519(constructNativeProvider());
-    else if (JAVA.equals(type))   return new Curve25519(constructJavaProvider());
-    else if (J2ME.equals(type))   return new Curve25519(constructJ2meProvider());
-    else if (BEST.equals(type))   return new Curve25519(constructOpportunisticProvider());
+    return getInstance(type, null);
+  }
+
+  public static Curve25519 getInstance(String type, SecureRandomProvider random)
+      throws NoSuchProviderException
+  {
+    if      (NATIVE.equals(type)) return new Curve25519(constructNativeProvider(random));
+    else if (JAVA.equals(type))   return new Curve25519(constructJavaProvider(random));
+    else if (J2ME.equals(type))   return new Curve25519(constructJ2meProvider(random));
+    else if (BEST.equals(type))   return new Curve25519(constructOpportunisticProvider(random));
     else                          throw new NoSuchProviderException(type);
   }
 
@@ -42,15 +48,6 @@ public class Curve25519 {
   private Curve25519(Curve25519Provider provider) {
     this.provider = provider;
   }
-
-
-//  static {
-//    try {
-//      provider = new NativeCurve25519Provider();
-//    } catch (UnsatisfiedLinkError ule) {
-//      provider = new JavaCurve25519Provider();
-//    }
-//  }
 
   /**
    * {@link Curve25519} is backed by either a native (via JNI)
@@ -110,39 +107,31 @@ public class Curve25519 {
     return provider.verifySignature(publicKey, message, signature);
   }
 
-//  private byte[] generatePrivateKey() {
-//    byte[] privateKey = new byte[32];
-//    random.nextBytes(privateKey);
-//
-//    return provider.generatePrivateKey(privateKey);
-//  }
-
-//  private byte[] getRandom(SecureRandom secureRandom, int size) {
-//    byte[] output = new byte[size];
-//    secureRandom.nextBytes(output);
-//
-//    return output;
-//  }
-
-  private static Curve25519Provider constructNativeProvider() throws NoSuchProviderException {
-    return constructClass("NativeCurve25519Provider");
+  private static Curve25519Provider constructNativeProvider(SecureRandomProvider random) throws NoSuchProviderException {
+    return constructClass("NativeCurve25519Provider", random);
   }
 
-  private static Curve25519Provider constructJavaProvider() throws NoSuchProviderException {
-    return constructClass("JavaCurve25519Provider");
+  private static Curve25519Provider constructJavaProvider(SecureRandomProvider random) throws NoSuchProviderException {
+    return constructClass("JavaCurve25519Provider", random);
   }
 
-  private static Curve25519Provider constructJ2meProvider() throws NoSuchProviderException {
-    return constructClass("J2meCurve25519Provider");
+  private static Curve25519Provider constructJ2meProvider(SecureRandomProvider random) throws NoSuchProviderException {
+    return constructClass("J2meCurve25519Provider", random);
   }
 
-  private static Curve25519Provider constructOpportunisticProvider() throws NoSuchProviderException {
-    return constructClass("OpportunisticCurve25519Provider");
+  private static Curve25519Provider constructOpportunisticProvider(SecureRandomProvider random) throws NoSuchProviderException {
+    return constructClass("OpportunisticCurve25519Provider", random);
   }
 
-  private static Curve25519Provider constructClass(String name) throws NoSuchProviderException {
+  private static Curve25519Provider constructClass(String name, SecureRandomProvider random) throws NoSuchProviderException {
     try {
-      return (Curve25519Provider)Class.forName("org.whispersystems.curve25519." + name).newInstance();
+      Curve25519Provider provider =  (Curve25519Provider)Class.forName("org.whispersystems.curve25519." + name).newInstance();
+
+      if (random != null) {
+        provider.setRandomProvider(random);
+      }
+
+      return provider;
     } catch (InstantiationException e) {
       throw new NoSuchProviderException(e);
     } catch (IllegalAccessException e) {

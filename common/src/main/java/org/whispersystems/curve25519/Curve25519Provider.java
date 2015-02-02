@@ -25,9 +25,10 @@ interface Curve25519Provider {
   byte[] generatePublicKey(byte[] privateKey);
   byte[] generatePrivateKey();
   byte[] generatePrivateKey(byte[] random);
+  byte[] calculateSignature(byte[] random, byte[] privateKey, byte[] message);
+  boolean verifySignature(byte[] publicKey, byte[] message, byte[] signature);
   byte[] getRandom(int length);
 
-  byte[]  calculateSignature(byte[] random, byte[] privateKey, byte[] message);
-  boolean verifySignature(byte[] publicKey, byte[] message, byte[] signature);
+  void setRandomProvider(SecureRandomProvider provider);
 
 }

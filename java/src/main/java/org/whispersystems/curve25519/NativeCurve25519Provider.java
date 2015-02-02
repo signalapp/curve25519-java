@@ -16,9 +16,6 @@
  */
 package org.whispersystems.curve25519;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-
 class NativeCurve25519Provider implements Curve25519Provider {
 
   private static boolean   libraryPresent         = false;
@@ -33,6 +30,8 @@ class NativeCurve25519Provider implements Curve25519Provider {
       libraryFailedException = e;
     }
   }
+
+  private SecureRandomProvider secureRandomProvider = new JCESecureRandomProvider();
 
   NativeCurve25519Provider() throws NoSuchProviderException {
     if (!libraryPresent) throw new NoSuchProviderException(libraryFailedException);
@@ -52,18 +51,14 @@ class NativeCurve25519Provider implements Curve25519Provider {
   @Override
   public byte[] getRandom(int length) {
     byte[] result = new byte[length];
-    setRandom(result);
+    secureRandomProvider.nextBytes(result);
 
     return result;
   }
 
-  private void setRandom(byte[] output) {
-    try {
-      SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-      secureRandom.nextBytes(output);
-    } catch (NoSuchAlgorithmException e) {
-      throw new AssertionError(e);
-    }
+  @Override
+  public void setRandomProvider(SecureRandomProvider provider) {
+    this.secureRandomProvider = provider;
   }
 
   @Override

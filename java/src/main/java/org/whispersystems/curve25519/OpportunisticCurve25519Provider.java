@@ -43,6 +43,11 @@ public class OpportunisticCurve25519Provider implements Curve25519Provider {
   }
 
   @Override
+  public void setRandomProvider(SecureRandomProvider provider) {
+    delegate.setRandomProvider(provider);
+  }
+
+  @Override
   public byte[] calculateSignature(byte[] random, byte[] privateKey, byte[] message) {
     return delegate.calculateSignature(random, privateKey, message);
   }
