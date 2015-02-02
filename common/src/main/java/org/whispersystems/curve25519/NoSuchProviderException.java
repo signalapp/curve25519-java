@@ -1,11 +1,19 @@
 package org.whispersystems.curve25519;
 
 public class NoSuchProviderException extends Exception {
+
+  private final Throwable nested;
+
   public NoSuchProviderException(Throwable e) {
-    super(e);
+    this.nested = e;
   }
 
   public NoSuchProviderException(String type) {
     super(type);
+    this.nested = null;
+  }
+
+  public Throwable getNested() {
+    return nested;
   }
 }
