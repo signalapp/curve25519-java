@@ -1,6 +1,6 @@
 package org.whispersystems.curve25519;
 
-public class NoSuchProviderException extends Exception {
+public class NoSuchProviderException extends RuntimeException {
 
   private final Throwable nested;
 
