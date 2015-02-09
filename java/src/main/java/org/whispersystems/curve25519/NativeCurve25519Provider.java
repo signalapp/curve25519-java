@@ -35,6 +35,12 @@ class NativeCurve25519Provider implements Curve25519Provider {
 
   NativeCurve25519Provider() throws NoSuchProviderException {
     if (!libraryPresent) throw new NoSuchProviderException(libraryFailedException);
+
+    try {
+      smokeCheck(31337);
+    } catch (UnsatisfiedLinkError ule) {
+      throw new NoSuchProviderException(ule);
+    }
   }
 
   @Override
@@ -75,5 +81,7 @@ class NativeCurve25519Provider implements Curve25519Provider {
 
   @Override
   public native boolean verifySignature(byte[] publicKey, byte[] message, byte[] signature);
+
+  private native boolean smokeCheck(int dummy);
 
 }

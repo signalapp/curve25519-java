@@ -107,3 +107,9 @@ JNIEXPORT jboolean JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Pr
 
     return result;
 }
+
+JNIEXPORT jboolean JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_smokeCheck
+  (JNIEnv *env, jobject obj, jint dummy)
+{
+    return 1;
+}
