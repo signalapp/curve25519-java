@@ -5,4 +5,9 @@ public class NullSecureRandomProvider implements SecureRandomProvider {
   public void nextBytes(byte[] output) {
     throw new IllegalArgumentException("No default J2ME Secure Random provider available!");
   }
+
+//  @Override
+  public int nextInt(int maxValue) {
+    throw new IllegalArgumentException("No default J2ME Secure Random provider available!");
+  }
 }

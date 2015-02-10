@@ -14,4 +14,14 @@ public class JCESecureRandomProvider implements SecureRandomProvider {
       throw new AssertionError(e);
     }
   }
+
+  @Override
+  public int nextInt(int maxValue) {
+    try {
+      SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+      return secureRandom.nextInt(maxValue);
+    } catch (NoSuchAlgorithmException e) {
+      throw new AssertionError(e);
+    }
+  }
 }
