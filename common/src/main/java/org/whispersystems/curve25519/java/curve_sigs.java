@@ -2,8 +2,6 @@ package org.whispersystems.curve25519.java;
 
 public class curve_sigs {
 
-    public static int MAX_MSG_LEN = 256;
-
     public static void curve25519_keygen(byte[] curve25519_pubkey_out,
                            byte[] curve25519_privkey_in)
     {
@@ -39,18 +37,13 @@ public class curve_sigs {
 
     public static int curve25519_sign(Sha512 sha512provider, byte[] signature_out,
                         byte[] curve25519_privkey,
-                        byte[] msg, long msg_len,
+                        byte[] msg, int msg_len,
                         byte[] random)
     {
       ge_p3 ed_pubkey_point = new ge_p3(); /* Ed25519 pubkey point */
       byte[] ed_pubkey = new byte[32]; /* Ed25519 encoded pubkey */
-      byte[] sigbuf = new byte[MAX_MSG_LEN + 128]; /* working buffer */
+      byte[] sigbuf = new byte[msg_len + 128]; /* working buffer */
       byte sign_bit = 0;
-
-      if (msg_len > MAX_MSG_LEN) {
-        Arrays.fill(signature_out, (byte)0);
-        return -1;
-      }
 
       /* Convert the Curve25519 privkey to an Ed25519 public key */
       ge_scalarmult_base.ge_scalarmult_base(ed_pubkey_point, curve25519_privkey);
@@ -70,7 +63,7 @@ public class curve_sigs {
 
     public static int curve25519_verify(Sha512 sha512provider, byte[] signature,
                           byte[] curve25519_pubkey,
-                          byte[] msg, long msg_len)
+                          byte[] msg, int msg_len)
     {
       int[] mont_x = new int[10];
       int[] mont_x_minus_one = new int[10];
@@ -80,12 +73,8 @@ public class curve_sigs {
       int[] ed_y = new int[10];
       byte[] ed_pubkey = new byte[32];
       long some_retval = 0;
-      byte[] verifybuf = new byte[MAX_MSG_LEN + 64]; /* working buffer */
-      byte[] verifybuf2 = new byte[MAX_MSG_LEN + 64]; /* working buffer #2 */
-
-      if (msg_len > MAX_MSG_LEN) {
-        return -1;
-      }
+      byte[] verifybuf = new byte[msg_len + 64]; /* working buffer */
+      byte[] verifybuf2 = new byte[msg_len + 64]; /* working buffer #2 */
 
       /* Convert the Curve25519 public key into an Ed25519 public key.  In
          particular, convert Curve25519's "montgomery" x-coordinate into an

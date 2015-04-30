@@ -40,10 +40,10 @@ int curve25519_sign(unsigned char* signature_out,
 {
   ge_p3 ed_pubkey_point; /* Ed25519 pubkey point */
   unsigned char ed_pubkey[32]; /* Ed25519 encoded pubkey */
-  unsigned char sigbuf[MAX_MSG_LEN + 128]; /* working buffer */
+  unsigned char *sigbuf; /* working buffer */
   unsigned char sign_bit = 0;
 
-  if (msg_len > MAX_MSG_LEN) {
+  if ((sigbuf = malloc(msg_len + 128)) == 0) {
     memset(signature_out, 0, 64);
     return -1;
   }
@@ -61,6 +61,8 @@ int curve25519_sign(unsigned char* signature_out,
   /* Encode the sign bit into signature (in unused high bit of S) */
    signature_out[63] &= 0x7F; /* bit should be zero already, but just in case */
    signature_out[63] |= sign_bit;
+
+   free(sigbuf);
    return 0;
 }
 
@@ -73,11 +75,18 @@ int curve25519_verify(const unsigned char* signature,
   fe ed_y;
   unsigned char ed_pubkey[32];
   unsigned long long some_retval;
-  unsigned char verifybuf[MAX_MSG_LEN + 64]; /* working buffer */
-  unsigned char verifybuf2[MAX_MSG_LEN + 64]; /* working buffer #2 */
+  unsigned char *verifybuf = NULL; /* working buffer */
+  unsigned char *verifybuf2 = NULL; /* working buffer #2 */
+  int result;
 
-  if (msg_len > MAX_MSG_LEN) {
-    return -1;
+  if ((verifybuf = malloc(msg_len + 64)) == 0) {
+    result = -1;
+    goto err;
+  }
+
+  if ((verifybuf2 = malloc(msg_len + 64)) == 0) {
+    result = -1;
+    goto err;
   }
 
   /* Convert the Curve25519 public key into an Ed25519 public key.  In
@@ -112,5 +121,17 @@ int curve25519_verify(const unsigned char* signature,
   /* verifybuf2 = internal to next call gets a copy of verifybuf, S gets 
      replaced with pubkey for hashing, then the whole thing gets zeroized
      (if bad sig), or contains a copy of msg (good sig) */
-  return crypto_sign_open(verifybuf2, &some_retval, verifybuf, 64 + msg_len, ed_pubkey);
+  result = crypto_sign_open(verifybuf2, &some_retval, verifybuf, 64 + msg_len, ed_pubkey);
+
+  err:
+
+  if (verifybuf != NULL) {
+    free(verifybuf);
+  }
+
+  if (verifybuf2 != NULL) {
+    free(verifybuf2);
+  }
+
+  return result;
 }
