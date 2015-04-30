@@ -2,8 +2,6 @@
 #ifndef __CURVE_SIGS_H__
 #define __CURVE_SIGS_H__
 
-#define MAX_MSG_LEN 256
-
 void curve25519_keygen(unsigned char* curve25519_pubkey_out, /* 32 bytes */
                        const unsigned char* curve25519_privkey_in); /* 32 bytes */
 

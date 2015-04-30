@@ -130,18 +130,16 @@ public abstract class Curve25519Test extends TestCase {
     }
   }
 
-  public void testSignatureOverflow() throws NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException {
-    Curve25519KeyPair keys         = getInstance().generateKeyPair();
-    byte[]            message      = new byte[4096];
+  public void testLargeSignatures() throws NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException {
+    Curve25519KeyPair keys      = getInstance().generateKeyPair();
+    byte[]            message   = new byte[1024 * 1024];
+    byte[]            signature = getInstance().calculateSignature(keys.getPrivateKey(), message);
 
-    try {
-      byte[] signature = getInstance().calculateSignature(keys.getPrivateKey(), message);
-      throw new InvalidKeyException("Should have asserted!");
-    } catch (AssertionError e) {
-      // Success!
-    } catch (IllegalArgumentException iae) {
-      // Success !
-    }
+    assertTrue(getInstance().verifySignature(keys.getPublicKey(), message, signature));
+
+    signature[0] ^= 0x01;
+
+    assertFalse(getInstance().verifySignature(keys.getPublicKey(), message, signature));
   }
 
   protected Curve25519 getInstance() throws NoSuchProviderException {
