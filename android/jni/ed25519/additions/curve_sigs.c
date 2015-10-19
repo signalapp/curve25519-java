@@ -8,7 +8,7 @@ void curve25519_keygen(unsigned char* curve25519_pubkey_out,
                        const unsigned char* curve25519_privkey_in)
 {
   ge_p3 ed; /* Ed25519 pubkey point */
-  fe ed_y, ed_y_plus_one, one_minus_ed_y, inv_one_minus_ed_y;
+  fe ed_y_plus_ed_z, ed_z_minus_ed_y, inv_ed_z_minus_ed_y;
   fe mont_x;
 
   /* Perform a fixed-base multiplication of the Edwards base point,
@@ -27,10 +27,10 @@ void curve25519_keygen(unsigned char* curve25519_pubkey_out,
   */
 
   ge_scalarmult_base(&ed, curve25519_privkey_in);
-  fe_add(ed_y_plus_one, ed.Y, ed.Z);
-  fe_sub(one_minus_ed_y, ed.Z, ed.Y);  
-  fe_invert(inv_one_minus_ed_y, one_minus_ed_y);
-  fe_mul(mont_x, ed_y_plus_one, inv_one_minus_ed_y);
+  fe_add(ed_y_plus_ed_z, ed.Y, ed.Z);
+  fe_sub(ed_z_minus_ed_y, ed.Z, ed.Y);  
+  fe_invert(inv_ed_z_minus_ed_y, ed_z_minus_ed_y);
+  fe_mul(mont_x, ed_y_plus_ed_z, inv_ed_z_minus_ed_y);
   fe_tobytes(curve25519_pubkey_out, mont_x);
 }
 
