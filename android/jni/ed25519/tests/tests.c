@@ -1,0 +1,587 @@
+#include <stdio.h>
+#include <string.h>
+#include "crypto_hash_sha512.h"
+#include "keygen.h"
+#include "curve_sigs.h"
+#include "xdsa.h"
+#include "uxdsa.h"
+#include "crypto_additions.h"
+#include "ge.h"
+#include "utility.h"
+#include "tests.h"
+
+#define MSG_LEN 200
+
+#define ERROR(msg) {if (!silent) print_error(msg); else return -1; }
+#define INFO(msg) {if (!silent) printf("%s\n", msg);}
+
+int sha512_fast_test(int silent)
+{
+  unsigned char sha512_input[112] =   
+    "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu";
+  unsigned char sha512_correct_output[64] =
+    {
+    0x8E, 0x95, 0x9B, 0x75, 0xDA, 0xE3, 0x13, 0xDA,
+    0x8C, 0xF4, 0xF7, 0x28, 0x14, 0xFC, 0x14, 0x3F,
+    0x8F, 0x77, 0x79, 0xC6, 0xEB, 0x9F, 0x7F, 0xA1,
+    0x72, 0x99, 0xAE, 0xAD, 0xB6, 0x88, 0x90, 0x18,
+    0x50, 0x1D, 0x28, 0x9E, 0x49, 0x00, 0xF7, 0xE4,
+    0x33, 0x1B, 0x99, 0xDE, 0xC4, 0xB5, 0x43, 0x3A,
+    0xC7, 0xD3, 0x29, 0xEE, 0xB6, 0xDD, 0x26, 0x54,
+    0x5E, 0x96, 0xE5, 0x5B, 0x87, 0x4B, 0xE9, 0x09
+    };
+  unsigned char sha512_actual_output[64];
+
+  crypto_hash_sha512(sha512_actual_output, sha512_input, sizeof(sha512_input));
+  if (memcmp(sha512_actual_output, sha512_correct_output, 64) != 0)
+    ERROR("SHA512 #1 BAD")
+  else
+    INFO("SHA512 #1 good");
+
+  sha512_input[111] ^= 1;
+
+  crypto_hash_sha512(sha512_actual_output, sha512_input, sizeof(sha512_input));
+  if (memcmp(sha512_actual_output, sha512_correct_output, 64) != 0)
+    INFO("SHA512 #2 good")
+  else
+    ERROR("SHA512 #2 BAD");
+
+  return 0;
+}
+
+
+int elligator_fast_test(int silent)
+{
+  unsigned char elligator_correct_output[32] = 
+  {
+  0x5f, 0x35, 0x20, 0x00, 0x1c, 0x6c, 0x99, 0x36, 
+  0xa3, 0x12, 0x06, 0xaf, 0xe7, 0xc7, 0xac, 0x22, 
+  0x4e, 0x88, 0x61, 0x61, 0x9b, 0xf9, 0x88, 0x72, 
+  0x44, 0x49, 0x15, 0x89, 0x9d, 0x95, 0xf4, 0x6e
+  };
+
+    unsigned char hashtopoint_correct_output[32] = 
+  {
+  0xce, 0x89, 0x9f, 0xb2, 0x8f, 0xf7, 0x20, 0x91,
+  0x5e, 0x14, 0xf5, 0xb7, 0x99, 0x08, 0xab, 0x17,
+  0xaa, 0x2e, 0xe2, 0x45, 0xb4, 0xfc, 0x2b, 0xf6,
+  0x06, 0x36, 0x29, 0x40, 0xed, 0x7d, 0xe7, 0xed
+  };
+
+    unsigned char calculateu_correct_output[32] = 
+  {
+  0xa8, 0x36, 0xb5, 0x30, 0xd3, 0xe7, 0x65, 0x54, 
+  0x3e, 0x72, 0xc8, 0x87, 0x7d, 0xa4, 0x12, 0x6d, 
+  0x77, 0xbf, 0x22, 0x0b, 0x72, 0xd5, 0xad, 0x6b, 
+  0xb6, 0xc2, 0x16, 0xb2, 0x92, 0x5f, 0x0f, 0x2a
+  };
+
+  int count;
+  fe in, out;
+  unsigned char bytes[32];
+  fe_0(in);
+  fe_0(out);
+  for (count = 0; count < 32; count++) {
+    bytes[count] = count;
+  }
+  fe_frombytes(in, bytes);
+  elligator(out, in);
+  fe_tobytes(bytes, out);
+  if (memcmp(bytes, elligator_correct_output, 32) != 0)
+    ERROR("Elligator BAD!!!")
+  else
+    INFO("Elligator good");
+
+  /* 
+  // Test whether Elligator can calculate Legendre == 0 
+  // Answer appears to be yes, since 2r^2 + 1 == 0 has a solution
+  //
+  fe NEG1;
+  fe ONE;
+  fe TWO;
+  fe_1(ONE);
+  fe_add(TWO, ONE, ONE);
+  fe_neg(NEG1, ONE);
+  printf("NEG1\n");
+  legendre_is_nonsquare(out, NEG1);
+  printf("TWO\n");
+  legendre_is_nonsquare(out, TWO);
+  print_error("done");
+  */
+
+  /* Hash to point vector test */
+  ge_p3 p3;
+  unsigned char htp[32];
+  for (count=0; count < 32; count++) {
+    htp[count] = count;
+  }
+
+  hash_to_point(&p3, htp, 32);
+  ge_p3_tobytes(htp, &p3);
+  if (memcmp(htp, hashtopoint_correct_output, 32) != 0)
+    ERROR("hash_to_point BAD!!!")
+  else
+    INFO("hash_to_point good");
+
+  /* calculate_U vector test */
+  ge_p3 Bu;
+  unsigned char U[32];
+  unsigned char Ubuf[200];
+  unsigned char a[32];
+  unsigned char Umsg[3];
+  Umsg[0] = 0;
+  Umsg[1] = 1;
+  Umsg[2] = 2;
+  for (count=0; count < 32; count++) {
+    a[count] = 8 + count;
+  }
+  sc_clamp(a);
+  calculate_Bu_and_U(&Bu, U, Ubuf, a, Umsg, 3);
+
+  if (memcmp(U, calculateu_correct_output, 32) != 0)
+    ERROR("calculate_U BAD!!!")
+  else
+    INFO("calculate_U good");
+
+  return 0;
+}
+
+int curvesigs_fast_test(int silent)
+{
+  unsigned char signature_correct[64] = {
+    0xcf, 0x87, 0x3d, 0x03, 0x79, 0xac, 0x20, 0xe8, 
+    0x89, 0x3e, 0x55, 0x67, 0xee, 0x0f, 0x89, 0x51, 
+    0xf8, 0xdb, 0x84, 0x0d, 0x26, 0xb2, 0x43, 0xb4, 
+    0x63, 0x52, 0x66, 0x89, 0xd0, 0x1c, 0xa7, 0x18, 
+    0xac, 0x18, 0x9f, 0xb1, 0x67, 0x85, 0x74, 0xeb, 
+    0xdd, 0xe5, 0x69, 0x33, 0x06, 0x59, 0x44, 0x8b, 
+    0x0b, 0xd6, 0xc1, 0x97, 0x3f, 0x7d, 0x78, 0x0a, 
+    0xb3, 0x95, 0x18, 0x62, 0x68, 0x03, 0xd7, 0x82,
+  };
+  unsigned char privkey[32];
+  unsigned char pubkey[32];
+  unsigned char signature[64];
+  unsigned char msg[MSG_LEN];
+  unsigned char random[64];
+
+  memset(privkey, 0, 32);
+  memset(pubkey, 0, 32);
+  memset(signature, 0, 64);
+  memset(msg, 0, MSG_LEN);
+  memset(random, 0, 64);
+
+  privkey[8] = 189; /* just so there's some bits set */
+  sc_clamp(privkey);
+  
+  /* Signature vector test */
+  curve25519_keygen(pubkey, privkey);
+
+  curve25519_sign(signature, privkey, msg, MSG_LEN, random);
+
+  if (memcmp(signature, signature_correct, 64) != 0)
+    ERROR("Curvesig incorrect - BAD")
+  else
+    INFO("Curvesig correct - good");
+
+  if (curve25519_verify(signature, pubkey, msg, MSG_LEN) == 0)
+    INFO("Curvesig #1 verified - good")
+  else
+    ERROR("Curvesig #1 didn't verify - BAD");
+
+  signature[0] ^= 1;
+
+  if (curve25519_verify(signature, pubkey, msg, MSG_LEN) == 0)
+    ERROR("Curvesig #2 verified - BAD")
+  else
+    INFO("Curvesig #2 didn't verify - good");
+
+  return 0;
+}
+
+int xdsa_fast_test(int silent)
+{
+  unsigned char signature_correct[64] = {
+  0x11, 0xc7, 0xf3, 0xe6, 0xc4, 0xdf, 0x9e, 0x8a, 
+  0x51, 0x50, 0xe1, 0xdb, 0x3b, 0x30, 0xf9, 0x2d, 
+  0xe3, 0xa3, 0xb3, 0xaa, 0x43, 0x86, 0x56, 0x54, 
+  0x5f, 0xa7, 0x39, 0x0f, 0x4b, 0xcc, 0x7b, 0xb2, 
+  0x6c, 0x43, 0x1d, 0x9e, 0x90, 0x64, 0x3e, 0x4f, 
+  0x0e, 0xaa, 0x0e, 0x9c, 0x55, 0x77, 0x66, 0xfa, 
+  0x69, 0xad, 0xa5, 0x76, 0xd6, 0x3d, 0xca, 0xf2, 
+  0xac, 0x32, 0x6c, 0x11, 0xd0, 0xb9, 0x77, 0x02,
+  };
+  unsigned char privkey[32];
+  unsigned char pubkey[32];
+  unsigned char signature[64];
+  unsigned char msg[MSG_LEN];
+  unsigned char random[64];
+
+  memset(privkey, 0, 32);
+  memset(pubkey, 0, 32);
+  memset(signature, 0, 64);
+  memset(msg, 0, MSG_LEN);
+  memset(random, 0, 64);
+
+  privkey[8] = 189; /* just so there's some bits set */
+  sc_clamp(privkey);
+  
+  /* Signature vector test */
+  curve25519_keygen(pubkey, privkey);
+
+  xdsa_sign(signature, privkey, msg, MSG_LEN, random);
+
+  if (memcmp(signature, signature_correct, 64) != 0)
+    ERROR("XDSA incorrect - BAD")
+  else
+    INFO("XDSA correct - good");
+
+  if (xdsa_verify(signature, pubkey, msg, MSG_LEN) == 0)
+    INFO("XDSA #1 verified - good")
+  else
+    ERROR("XDSA #1 didn't verify - BAD");
+
+  signature[0] ^= 1;
+
+  if (xdsa_verify(signature, pubkey, msg, MSG_LEN) == 0)
+    ERROR("XDSA #2 verified - BAD")
+  else
+    INFO("XDSA #2 didn't verify - good");
+
+  return 0;
+}
+
+int uxdsa_fast_test(int silent)
+{
+  unsigned char signature_correct[96] = {
+  0x66, 0x51, 0x0b, 0x68, 0x9e, 0xb7, 0xd8, 0x55, 
+  0x04, 0x62, 0xaf, 0x52, 0x0c, 0x89, 0x69, 0xe8, 
+  0xa9, 0xa5, 0x3d, 0xf3, 0x8e, 0xd6, 0xe6, 0x0f, 
+  0xe8, 0xfe, 0xd6, 0xa8, 0x95, 0x66, 0x9c, 0x19, 
+  0x66, 0x4a, 0x65, 0x25, 0xff, 0xb7, 0x47, 0x74, 
+  0x8e, 0x86, 0x40, 0x55, 0x0f, 0xb1, 0x4a, 0xd1, 
+  0x6d, 0xe0, 0x3d, 0x51, 0xa2, 0xd3, 0x4d, 0xee, 
+  0x64, 0x7e, 0x35, 0x98, 0x42, 0x25, 0x5a, 0x02, 
+  0xf8, 0x8c, 0x1e, 0x23, 0x5b, 0xd5, 0x7f, 0xb9, 
+  0x98, 0x60, 0x55, 0x63, 0xd6, 0xe0, 0x6d, 0xa1, 
+  0x29, 0xd9, 0xfc, 0xee, 0x1c, 0x08, 0x6d, 0x5a, 
+  0x28, 0xa1, 0x27, 0xf0, 0x06, 0xb9, 0x79, 0x03
+  };
+  unsigned char privkey[32];
+  unsigned char pubkey[32];
+  unsigned char signature[96];
+  unsigned char msg[MSG_LEN];
+  unsigned char random[64];
+
+  memset(privkey, 0, 32);
+  memset(pubkey, 0, 32);
+  memset(signature, 0, 96);
+  memset(msg, 0, MSG_LEN);
+  memset(random, 0, 64);
+
+  privkey[8] = 189; /* just so there's some bits set */
+  sc_clamp(privkey);
+  
+  /* Signature vector test */
+  curve25519_keygen(pubkey, privkey);
+
+  uxdsa_sign(signature, privkey, msg, MSG_LEN, random);
+
+  if (memcmp(signature, signature_correct, 96) != 0)
+    ERROR("UXDSA incorrect - BAD")
+  else
+    INFO("UXDSA correct - good");
+
+  if (uxdsa_verify(signature, pubkey, msg, MSG_LEN) == 0)
+    INFO("UXDSA #1 verified - good")
+  else
+    ERROR("UXDSA #1 didn't verify - BAD");
+
+  signature[0] ^= 1;
+
+  if (uxdsa_verify(signature, pubkey, msg, MSG_LEN) == 0)
+    ERROR("UXDSA #2 verified - BAD")
+  else
+    INFO("UXDSA #2 didn't verify - good");
+
+  /* Test U */
+  unsigned char sigprev[96];
+  memcpy(sigprev, signature, 96);
+  sigprev[0] ^= 1; /* undo prev disturbance */
+
+  random[0] ^= 1; 
+  uxdsa_sign(signature, privkey, msg, MSG_LEN, random);
+ 
+  if (memcmp(signature, sigprev, 32) != 0)
+    ERROR("UXDSA U value changed - BAD")
+  else
+    INFO("UXDSA U value constant - good");
+
+  if (memcmp(signature+32, sigprev+32, 64) == 0)
+    ERROR("UXDSA (h, s) values didn't change - BAD")
+  else
+    INFO("UXDSA (h, s) values changed - good");
+
+  return 0;
+}
+
+int curvesigs_slow_test(int silent, int iterations)
+{
+
+  unsigned char signature_10k_correct[64] = {
+  0xfc, 0xba, 0x55, 0xc4, 0x85, 0x4a, 0x42, 0x25, 
+  0x19, 0xab, 0x08, 0x8d, 0xfe, 0xb5, 0x13, 0xb6, 
+  0x0d, 0x24, 0xbb, 0x16, 0x27, 0x55, 0x71, 0x48, 
+  0xdd, 0x20, 0xb1, 0xcd, 0x2a, 0xd6, 0x7e, 0x35, 
+  0xef, 0x33, 0x4c, 0x7b, 0x6d, 0x94, 0x6f, 0x52, 
+  0xec, 0x43, 0xd7, 0xe6, 0x35, 0x24, 0xcd, 0x5b, 
+  0x5d, 0xdc, 0xb2, 0x32, 0xc6, 0x22, 0x53, 0xf3, 
+  0x38, 0x02, 0xf8, 0x28, 0x28, 0xc5, 0x65, 0x05,
+  };
+
+  int count;  
+  unsigned char privkey[32];
+  unsigned char pubkey[32];
+  unsigned char signature[64];
+  unsigned char msg[MSG_LEN];
+  unsigned char random[64];
+
+  memset(privkey, 0, 32);
+  memset(pubkey, 0, 32);
+  memset(signature, 0, 64);
+  memset(msg, 0, MSG_LEN);
+  memset(random, 0, 64);
+
+  /* Signature random test */
+  INFO("Pseudorandom curvesigs...");
+  for (count = 1; count <= iterations; count++) {
+    unsigned char b[64];
+    crypto_hash_sha512(b, signature, 64);
+    memmove(privkey, b, 32);
+    crypto_hash_sha512(b, privkey, 32);
+    memmove(random, b, 64);
+
+    sc_clamp(privkey);
+    curve25519_keygen(pubkey, privkey);
+
+    curve25519_sign(signature, privkey, msg, MSG_LEN, random);
+
+    if (curve25519_verify(signature, pubkey, msg, MSG_LEN) != 0)
+      ERROR("Curvesig verify failure #1");
+
+    if (b[63] & 1)
+      signature[count % 64] ^= 1;
+    else
+      msg[count % MSG_LEN] ^= 1;
+    if (curve25519_verify(signature, pubkey, msg, MSG_LEN) == 0)
+      ERROR("Curvesig verify failure #2");
+      
+    if (count == 10000) {
+      if (memcmp(signature, signature_10k_correct, 64) != 0)
+        ERROR("Curvesig signature 10K doesn't match");
+    }
+  }
+  INFO("good");
+  return 1;
+}
+
+int xdsa_slow_test(int silent, int iterations)
+{
+
+  unsigned char signature_10k_correct[64] = {
+  0x15, 0x29, 0x03, 0x38, 0x66, 0x16, 0xcd, 0x26, 
+  0xbb, 0x3e, 0xec, 0xe2, 0x9f, 0x72, 0xa2, 0x5c, 
+  0x7d, 0x05, 0xc9, 0xcb, 0x84, 0x3f, 0x92, 0x96, 
+  0xb3, 0xfb, 0xb9, 0xdd, 0xd6, 0xed, 0x99, 0x04, 
+  0xc1, 0xa8, 0x02, 0x16, 0xcf, 0x49, 0x3f, 0xf1, 
+  0xbe, 0x69, 0xf9, 0xf1, 0xcc, 0x16, 0xd7, 0xdc, 
+  0x6e, 0xd3, 0x78, 0xaa, 0x04, 0xeb, 0x71, 0x51, 
+  0x9d, 0xe8, 0x7a, 0x5b, 0xd8, 0x49, 0x7b, 0x05, 
+  };
+
+  int count;  
+  unsigned char privkey[32];
+  unsigned char pubkey[32];
+  unsigned char signature[96];
+  unsigned char msg[MSG_LEN];
+  unsigned char random[64];
+
+  memset(privkey, 0, 32);
+  memset(pubkey, 0, 32);
+  memset(signature, 1, 64);
+  memset(msg, 0, MSG_LEN);
+  memset(random, 0, 64);
+
+  /* Signature random test */
+  INFO("Pseudorandom XDSA...");
+  for (count = 1; count <= iterations; count++) {
+    unsigned char b[64];
+    crypto_hash_sha512(b, signature, 64);
+    memmove(privkey, b, 32);
+    crypto_hash_sha512(b, privkey, 32);
+    memmove(random, b, 64);
+
+    sc_clamp(privkey);
+    curve25519_keygen(pubkey, privkey);
+
+    xdsa_sign(signature, privkey, msg, MSG_LEN, random);
+
+    if (xdsa_verify(signature, pubkey, msg, MSG_LEN) != 0)
+      ERROR("XDSA verify failure #1");
+
+    if (b[63] & 1)
+      signature[count % 64] ^= 1;
+    else
+      msg[count % MSG_LEN] ^= 1;
+    if (xdsa_verify(signature, pubkey, msg, MSG_LEN) == 0)
+      ERROR("XDSA verify failure #2");
+
+    if (count == 10000) {
+      if (memcmp(signature, signature_10k_correct, 64) != 0)
+        ERROR("XDSA signature 10K doesn't match");
+    }
+  }
+  INFO("good");
+  return 1;
+}
+
+int xdsa_to_curvesigs_slow_test(int silent, int iterations)
+{
+
+  unsigned char signature_10k_correct[64] = {
+  0x33, 0x50, 0xa8, 0x68, 0xcd, 0x9e, 0x74, 0x99, 
+  0xa3, 0x5c, 0x33, 0x75, 0x2b, 0x22, 0x03, 0xf8, 
+  0xb5, 0x0f, 0xea, 0x8c, 0x33, 0x1c, 0x68, 0x8b, 
+  0xbb, 0xf3, 0x31, 0xcf, 0x7c, 0x42, 0x37, 0x35,  
+  0xa0, 0x0e, 0x15, 0xb8, 0x5d, 0x2b, 0xe1, 0xa2, 
+  0x03, 0x77, 0x94, 0x3d, 0x13, 0x5c, 0xd4, 0x9b, 
+  0x6a, 0x31, 0xf4, 0xdc, 0xfe, 0x24, 0xad, 0x54, 
+  0xeb, 0xd2, 0x98, 0x47, 0xf1, 0xcc, 0xbf, 0x0d
+  
+  };
+
+  int count;  
+  unsigned char privkey[32];
+  unsigned char pubkey[32];
+  unsigned char signature[96];
+  unsigned char msg[MSG_LEN];
+  unsigned char random[64];
+
+  memset(privkey, 0, 32);
+  memset(pubkey, 0, 32);
+  memset(signature, 2, 64);
+  memset(msg, 0, MSG_LEN);
+  memset(random, 0, 64);
+
+  /* Signature random test */
+  INFO("Pseudorandom XDSA/Curvesigs...");
+  for (count = 1; count <= iterations; count++) {
+    unsigned char b[64];
+    crypto_hash_sha512(b, signature, 64);
+    memmove(privkey, b, 32);
+    crypto_hash_sha512(b, privkey, 32);
+    memmove(random, b, 64);
+
+    sc_clamp(privkey);
+    curve25519_keygen(pubkey, privkey);
+
+    xdsa_sign(signature, privkey, msg, MSG_LEN, random);
+
+    if (curve25519_verify(signature, pubkey, msg, MSG_LEN) != 0)
+      ERROR("XDSA/Curvesigs verify failure #1");
+
+    if (b[63] & 1)
+      signature[count % 64] ^= 1;
+    else
+      msg[count % MSG_LEN] ^= 1;
+    if (curve25519_verify(signature, pubkey, msg, MSG_LEN) == 0)
+      ERROR("XDSA/Curvesigs verify failure #2");
+
+    if (count == 10000) {
+      if (memcmp(signature, signature_10k_correct, 64) != 0)
+        ERROR("XDSA/Curvesigs signature 10K doesn't match");
+    }
+  }
+  INFO("good");
+  return 1;
+}
+
+int uxdsa_slow_test(int silent, int iterations)
+{
+
+  unsigned char signature_10k_correct[96] = {
+  0x2d, 0x2a, 0x69, 0x20, 0x0a, 0xe7, 0x76, 0xeb, 
+  0x08, 0xc0, 0x3b, 0x4f, 0x26, 0x82, 0xd5, 0x3c, 
+  0x97, 0xc6, 0xb7, 0x9c, 0x6a, 0xf6, 0x24, 0x91, 
+  0xe1, 0xf9, 0x8f, 0x4f, 0x23, 0xc4, 0xba, 0x28, 
+  0x4b, 0x60, 0x87, 0x07, 0xe5, 0x94, 0xcb, 0xda, 
+  0x1b, 0x03, 0x5a, 0xd4, 0xd0, 0x6d, 0xd9, 0xa0, 
+  0x6a, 0x07, 0xee, 0x7b, 0x98, 0x7c, 0xe1, 0xc4, 
+  0x91, 0x52, 0x0d, 0x08, 0x32, 0xd7, 0x10, 0x03, 
+  0xbd, 0x96, 0x34, 0x11, 0x0c, 0x44, 0x56, 0x95, 
+  0x8b, 0x87, 0xdb, 0x12, 0x97, 0xa9, 0x5a, 0x62, 
+  0x2a, 0x34, 0xb1, 0xb1, 0xe2, 0xb4, 0xf5, 0x3c, 
+  0x34, 0xb6, 0x69, 0x0b, 0x77, 0x0e, 0x49, 0x07,
+  };
+
+  int count;  
+  unsigned char privkey[32];
+  unsigned char pubkey[32];
+  unsigned char signature[96];
+  unsigned char msg[MSG_LEN];
+  unsigned char random[64];
+
+  memset(privkey, 0, 32);
+  memset(pubkey, 0, 32);
+  memset(signature, 3, 96);
+  memset(msg, 0, MSG_LEN);
+  memset(random, 0, 64);
+
+  INFO("Pseudorandom UXDSA...");
+  for (count = 1; count <= iterations; count++) {
+    unsigned char b[64];
+    crypto_hash_sha512(b, signature, 96);
+    memmove(privkey, b, 32);
+    crypto_hash_sha512(b, privkey, 32);
+    memmove(random, b, 64);
+
+    sc_clamp(privkey);
+    curve25519_keygen(pubkey, privkey);
+
+    uxdsa_sign(signature, privkey, msg, MSG_LEN, random);
+
+    if (uxdsa_verify(signature, pubkey, msg, MSG_LEN) != 0)
+      ERROR("UXDSA verify failure #1");
+
+    if (b[63] & 1)
+      signature[count % 96] ^= 1;
+    else
+      msg[count % MSG_LEN] ^= 1;
+    if (uxdsa_verify(signature, pubkey, msg, MSG_LEN) == 0)
+      ERROR("UXDSA verify failure #2");
+
+    if (count == 10000) {
+      if (memcmp(signature, signature_10k_correct, 96) != 0)
+        ERROR("UXDSA 10K doesn't match");
+    }
+  }
+  INFO("good");
+  return 1;
+}
+
+int all_fast_tests(int silent)
+{
+  int result;
+  if ((result = sha512_fast_test(silent)) != 0)
+    return result;
+  if ((result = elligator_fast_test(silent)) != 0)
+    return result;
+  if ((result = curvesigs_fast_test(silent)) != 0)
+    return result;
+  if ((result = xdsa_fast_test(silent)) != 0)
+    return result;
+  if ((result = uxdsa_fast_test(silent)) != 0)
+    return result;
+
+  return 0;
+}
+

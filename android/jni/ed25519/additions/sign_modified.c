@@ -4,6 +4,7 @@
 #include "ge.h"
 #include "sc.h"
 #include "zeroize.h"
+#include "crypto_additions.h"
 
 /* NEW: Compare to pristine crypto_sign() 
    Uses explicit private key for nonce derivation and as scalar,
@@ -36,6 +37,7 @@ int crypto_sign_modified(
   memmove(sm + 32,pk,32);
 
   sc_reduce(nonce);
+  
   ge_scalarmult_base(&R,nonce);
   ge_p3_tobytes(sm,&R);
 

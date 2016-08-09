@@ -63,4 +63,14 @@ public class OpportunisticCurve25519Provider implements Curve25519Provider {
     return delegate.verifySignature(publicKey, message, signature);
   }
 
+  @Override
+  public byte[] calculateUniqueSignature(byte[] random, byte[] privateKey, byte[] message) {
+    return delegate.calculateUniqueSignature(random, privateKey, message);
+  }
+
+  @Override
+  public boolean verifyUniqueSignature(byte[] publicKey, byte[] message, byte[] signature) {
+    return delegate.verifyUniqueSignature(publicKey, message, signature);
+  }
+
 }

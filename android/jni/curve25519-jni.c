@@ -11,6 +11,8 @@
 #include <jni.h>
 #include "curve25519-donna.h"
 #include "curve_sigs.h"
+#include "xdsa.h"
+#include "uxdsa.h"
 
 JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_generatePrivateKey
   (JNIEnv *env, jobject obj, jbyteArray random)
@@ -70,7 +72,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519
     uint8_t*   messageBytes    = (uint8_t*)(*env)->GetByteArrayElements(env, message, 0);
     jsize      messageLength   = (*env)->GetArrayLength(env, message);
 
-    int result = curve25519_sign(signatureBytes, privateKeyBytes, messageBytes, messageLength, randomBytes);
+    int result = xdsa_sign(signatureBytes, privateKeyBytes, messageBytes, messageLength, randomBytes);
 
     (*env)->ReleaseByteArrayElements(env, signature, signatureBytes, 0);
     (*env)->ReleaseByteArrayElements(env, random, randomBytes, 0);
@@ -97,6 +99,45 @@ JNIEXPORT jboolean JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Pr
 
     return result;
 }
+
+JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_calculateUniqueSignature
+  (JNIEnv *env, jobject obj, jbyteArray random, jbyteArray privateKey, jbyteArray message)
+{
+    jbyteArray signature       = (*env)->NewByteArray(env, 96);
+    uint8_t*   signatureBytes  = (uint8_t*)(*env)->GetByteArrayElements(env, signature, 0);
+    uint8_t*   randomBytes     = (uint8_t*)(*env)->GetByteArrayElements(env, random, 0);
+    uint8_t*   privateKeyBytes = (uint8_t*)(*env)->GetByteArrayElements(env, privateKey, 0);
+    uint8_t*   messageBytes    = (uint8_t*)(*env)->GetByteArrayElements(env, message, 0);
+    jsize      messageLength   = (*env)->GetArrayLength(env, message);
+
+    int result = uxdsa_sign(signatureBytes, privateKeyBytes, messageBytes, messageLength, randomBytes);
+
+    (*env)->ReleaseByteArrayElements(env, signature, signatureBytes, 0);
+    (*env)->ReleaseByteArrayElements(env, random, randomBytes, 0);
+    (*env)->ReleaseByteArrayElements(env, privateKey, privateKeyBytes, 0);
+    (*env)->ReleaseByteArrayElements(env, message, messageBytes, 0);
+
+    if (result == 0) return signature;
+    else             (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/AssertionError"), "Signature failed!");
+}
+
+JNIEXPORT jboolean JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_verifyUniqueSignature
+  (JNIEnv *env, jobject obj, jbyteArray publicKey, jbyteArray message, jbyteArray signature)
+{
+    uint8_t*   signatureBytes = (uint8_t*)(*env)->GetByteArrayElements(env, signature, 0);
+    uint8_t*   publicKeyBytes = (uint8_t*)(*env)->GetByteArrayElements(env, publicKey, 0);
+    uint8_t*   messageBytes   = (uint8_t*)(*env)->GetByteArrayElements(env, message, 0);
+    jsize      messageLength  = (*env)->GetArrayLength(env, message);
+
+    jboolean result = (uxdsa_verify(signatureBytes, publicKeyBytes, messageBytes, messageLength) == 0);
+
+    (*env)->ReleaseByteArrayElements(env, signature, signatureBytes, 0);
+    (*env)->ReleaseByteArrayElements(env, publicKey, publicKeyBytes, 0);
+    (*env)->ReleaseByteArrayElements(env, message, messageBytes, 0);
+
+    return result;
+}
+
 
 JNIEXPORT jboolean JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_smokeCheck
   (JNIEnv *env, jobject obj, jint dummy)

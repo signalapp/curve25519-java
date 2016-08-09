@@ -2,7 +2,7 @@
 #include "crypto_verify_32.h"
 
 /*
-return 1 if f == 0
+return nonzero if f == 0
 return 0 if f != 0
 
 Preconditions:
