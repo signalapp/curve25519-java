@@ -110,15 +110,47 @@ public class Curve25519 {
       throw new IllegalArgumentException("Invalid public key!");
     }
 
-    if (message == null) {
-      throw new IllegalArgumentException("Message can't be null!");
-    }
-
-    if (signature == null || signature.length != 64) {
-      throw new IllegalArgumentException("Invalid signature size!");
+    if (message == null || signature == null || signature.length != 64) {
+      return false;
     }
 
     return provider.verifySignature(publicKey, message, signature);
+  }
+
+  /**
+   * Calculates a Unique Curve25519 signature.
+   *
+   * @param privateKey The private Curve25519 key to create the signature with.
+   * @param message The message to sign.
+   * @return A 96-byte signature.
+   */
+  public byte[] calculateUniqueSignature(byte[] privateKey, byte[] message) {
+    if (privateKey == null || privateKey.length != 32) {
+      throw new IllegalArgumentException("Invalid private key!");
+    }
+
+    byte[] random = provider.getRandom(64);
+    return provider.calculateUniqueSignature(random, privateKey, message);
+  }
+
+  /**
+   * Verify a Unique Curve25519 signature.
+   *
+   * @param publicKey The Curve25519 public key the unique signature belongs to.
+   * @param message The message that was signed.
+   * @param signature The unique signature to verify.
+   * @return true if valid, false if not.
+   */
+  public boolean verifyUniqueSignature(byte[] publicKey, byte[] message, byte[] signature) {
+    if (publicKey == null || publicKey.length != 32) {
+      throw new IllegalArgumentException("Invalid public key!");
+    }
+
+    if (message == null || signature == null || signature.length != 96) {
+      return false;
+    }
+
+    return provider.verifyUniqueSignature(publicKey, message, signature);
   }
 
   private static Curve25519Provider constructNativeProvider(SecureRandomProvider random) throws NoSuchProviderException {
