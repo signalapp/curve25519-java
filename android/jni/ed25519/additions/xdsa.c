@@ -13,10 +13,10 @@ int xdsa_sign(unsigned char* signature_out,
   unsigned char a[32];
   unsigned char A[32];
   ge_p3 ed_pubkey_point;
-  unsigned char sigbuf[MAX_MSG_LEN + 128]; /* working buffer */
+  unsigned char *sigbuf; /* working buffer */
   unsigned char sign_bit = 0;
 
-  if (msg_len > MAX_MSG_LEN) {
+  if ((sigbuf = malloc(msg_len + 128)) == 0) {
     memset(signature_out, 0, 64);
     return -1;
   }
@@ -37,6 +37,7 @@ int xdsa_sign(unsigned char* signature_out,
   /* Perform an Ed25519 signature with explicit private key */
   crypto_sign_modified(sigbuf, msg, msg_len, a, A, random);
   memmove(signature_out, sigbuf, 64);
+  free(sigbuf);
   return 0;
 }
 
