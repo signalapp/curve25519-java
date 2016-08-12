@@ -70,6 +70,14 @@ public class Curve25519 {
    * @return A 32-byte shared secret.
    */
   public byte[] calculateAgreement(byte[] publicKey, byte[] privateKey) {
+    if (publicKey == null || privateKey == null) {
+      throw new IllegalArgumentException("Keys must not be null!");
+    }
+
+    if (publicKey.length != 32 || privateKey.length != 32) {
+      throw new IllegalArgumentException("Keys must be 32 bytes!");
+    }
+
     return provider.calculateAgreement(privateKey, publicKey);
   }
 
@@ -81,6 +89,10 @@ public class Curve25519 {
    * @return A 64-byte signature.
    */
   public byte[] calculateSignature(byte[] privateKey, byte[] message) {
+    if (privateKey == null || privateKey.length != 32) {
+      throw new IllegalArgumentException("Invalid private key length!");
+    }
+
     byte[] random = provider.getRandom(64);
     return provider.calculateSignature(random, privateKey, message);
   }
@@ -94,6 +106,18 @@ public class Curve25519 {
    * @return true if valid, false if not.
    */
   public boolean verifySignature(byte[] publicKey, byte[] message, byte[] signature) {
+    if (publicKey == null || publicKey.length != 32) {
+      throw new IllegalArgumentException("Invalid public key!");
+    }
+
+    if (message == null) {
+      throw new IllegalArgumentException("Message can't be null!");
+    }
+
+    if (signature == null || signature.length != 64) {
+      throw new IllegalArgumentException("Invalid signature size!");
+    }
+
     return provider.verifySignature(publicKey, message, signature);
   }
 
