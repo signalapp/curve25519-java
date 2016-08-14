@@ -17,9 +17,9 @@ static unsigned char Lminus1[32] = {0xec, 0xd3, 0xf5, 0x5c, 0x1a, 0x63, 0x12, 0x
                                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10};
 
 /* aneg = -a (mod L) */
-void sc_neg(unsigned char *aneg, const unsigned char *a)
+void sc_neg(unsigned char *b, const unsigned char *a)
 {
   unsigned char zero[32];
   memset(zero, 0, 32);
-  sc_muladd(aneg, Lminus1, a, zero); /* sneg = (-1)s + 0   (mod L) */
+  sc_muladd(b, Lminus1, a, zero); /* b = (-1)a + 0   (mod L) */
 }

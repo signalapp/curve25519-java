@@ -54,5 +54,9 @@ int crypto_usign_modified(
   memmove(sm, h, 32);               /* Write h */
   sc_muladd(sm + 32, h, a, r);      /* Write s */
 
+  /* Erase any traces of private scalar or
+     nonce left in the stack from sc_muladd. */
+  zeroize_stack();
+  zeroize(r, 64);
   return 0;
 }

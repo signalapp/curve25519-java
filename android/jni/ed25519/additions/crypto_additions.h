@@ -9,15 +9,20 @@
 #define MAX_MSG_LEN 256
 
 /* aneg = -a */
-void sc_neg(unsigned char *aneg, const unsigned char *a);
+void sc_neg(unsigned char *b, const unsigned char *a);
 
-void fe_montx_to_edy(fe edy, const fe montx);
-void ge_p3_to_montx(fe montx, const ge_p3 *ed);
+int fe_isequal(const fe f, const fe g);
+void fe_mont_rhs(fe v2, const fe u);
+void fe_montx_to_edy(fe y, const fe u);
+void fe_sqrt(fe b, const fe a);
 
+int ge_is_small_order(const ge_p3 *p);
+void ge_montx_to_p2(ge_p2* p, const fe u, const unsigned char ed_sign_bit);
+void ge_p3_to_montx(fe u, const ge_p3 *p);
 void ge_scalarmult(ge_p3 *h, const unsigned char *a, const ge_p3 *A);
 
-void elligator(fe out, const fe in);
-void hash_to_point(ge_p3* out, const unsigned char* in, const unsigned long in_len);
+void elligator(fe u, const fe r);
+void hash_to_point(ge_p3* p, const unsigned char* msg, const unsigned long in_len);
 void calculate_Bu(ge_p3* Bu, 
                   unsigned char* buf,
                   const unsigned char* msg, const unsigned long msg_len);

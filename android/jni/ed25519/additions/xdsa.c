@@ -3,7 +3,7 @@
 #include "curve_sigs.h"
 #include "crypto_sign.h"
 #include "crypto_additions.h"
-
+#include "zeroize.h"
 
 int xdsa_sign(unsigned char* signature_out,
               const unsigned char* curve25519_privkey,
@@ -37,6 +37,8 @@ int xdsa_sign(unsigned char* signature_out,
   /* Perform an Ed25519 signature with explicit private key */
   crypto_sign_modified(sigbuf, msg, msg_len, a, A, random);
   memmove(signature_out, sigbuf, 64);
+
+  zeroize(a, 32);
   free(sigbuf);
   return 0;
 }
@@ -45,8 +47,8 @@ int xdsa_verify(const unsigned char* signature,
                 const unsigned char* curve25519_pubkey,
                 const unsigned char* msg, const unsigned long msg_len)
 {
-  fe mont_x;
-  fe ed_y;
+  fe u;
+  fe y;
   unsigned char ed_pubkey[32];
   unsigned long long some_retval;
   unsigned char verifybuf[MAX_MSG_LEN + 64]; /* working buffer */
@@ -58,13 +60,13 @@ int xdsa_verify(const unsigned char* signature,
 
   /* Convert the Curve25519 public key into an Ed25519 public key.
 
-     ed_y = (mont_x - 1) / (mont_x + 1)
+     y = (u - 1) / (u + 1)
 
-     NOTE: mont_x=-1 is converted to ed_y=0 since fe_invert is mod-exp
+     NOTE: u=-1 is converted to y=0 since fe_invert is mod-exp
   */
-  fe_frombytes(mont_x, curve25519_pubkey);
-  fe_montx_to_edy(ed_y, mont_x);
-  fe_tobytes(ed_pubkey, ed_y);
+  fe_frombytes(u, curve25519_pubkey);
+  fe_montx_to_edy(y, u);
+  fe_tobytes(ed_pubkey, y);
 
   memmove(verifybuf, signature, 64);
   memmove(verifybuf+64, msg, msg_len);

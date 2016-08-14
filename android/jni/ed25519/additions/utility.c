@@ -18,8 +18,3 @@ void print_fe(const char* name, const fe in)
   print_vector(name, bytes);
 }
 
-void print_error(const char* error)
-{
-  printf("ERROR: %s\n", error);
-  abort();
-}

@@ -2,18 +2,18 @@
 #include "fe.h"
 #include "crypto_additions.h"
 
-void fe_montx_to_edy(fe edy, const fe montx)
+void fe_montx_to_edy(fe y, const fe u)
 {
   /* 
-     ed_y = (mont_x - 1) / (mont_x + 1)
+     y = (u - 1) / (u + 1)
 
-     NOTE: mont_x=-1 is converted to ed_y=0 since fe_invert is mod-exp
+     NOTE: u=-1 is converted to y=0 since fe_invert is mod-exp
   */
-  fe one, montx_minus_one, montx_plus_one, inv_montx_plus_one;
+  fe one, um1, up1;
 
   fe_1(one);
-  fe_sub(montx_minus_one, montx, one);
-  fe_add(montx_plus_one, montx, one);
-  fe_invert(inv_montx_plus_one, montx_plus_one);
-  fe_mul(edy, montx_minus_one, inv_montx_plus_one);
+  fe_sub(um1, u, one);
+  fe_add(up1, u, one);
+  fe_invert(up1, up1);
+  fe_mul(y, um1, up1);
 }

@@ -24,90 +24,69 @@ unsigned int legendre_is_nonsquare(fe in)
   return 1 & bytes[31];
 }
 
-void elligator(fe mont_x, const fe in)
+void elligator(fe u, const fe r)
 {
-  /* r = in
-   * v = -A/(1+2r^2)
-   * e = (v^3 + Av^2 + v)^((q-1)/2) # legendre symbol
-   * if e == 1 (square) or e == 0 (because v == 0 and 2r^2 + 1 == 0)
-   *   out = v
+  /* r = input
+   * x = -A/(1+2r^2)                # 2 is nonsquare
+   * e = (x^3 + Ax^2 + x)^((q-1)/2) # legendre symbol
+   * if e == 1 (square) or e == 0 (because x == 0 and 2r^2 + 1 == 0)
+   *   u = x
    * if e == -1 (nonsquare)
-   *   out = -v - A
+   *   u = -x - A
    */
   fe A, one, twor2, twor2plus1, twor2plus1inv;
-  fe v, v2, v3, Av2, e, u, Atemp, uneg;
+  fe x, e, Atemp, uneg;
   unsigned int nonsquare;
 
-  fe_0(one);
-  one[0] = 1;                            /* 1 */
+  fe_1(one);
   fe_0(A);
   A[0] = 486662;                         /* A = 486662 */
 
-  fe_sq2(twor2, in);                     /* 2r^2 */
+  fe_sq2(twor2, r);                      /* 2r^2 */
   fe_add(twor2plus1, twor2, one);        /* 1+2r^2 */
   fe_invert(twor2plus1inv, twor2plus1);  /* 1/(1+2r^2) */
-  fe_mul(v, twor2plus1inv, A);           /* A/(1+2r^2) */
-  fe_neg(v, v);                          /* v = -A/(1+2r^2) */
+  fe_mul(x, twor2plus1inv, A);           /* A/(1+2r^2) */
+  fe_neg(x, x);                          /* x = -A/(1+2r^2) */
 
-  fe_sq(v2, v);                          /* v^2 */
-  fe_mul(v3, v2, v);                     /* v^3 */
-  fe_mul(Av2, v2, A);                    /* Av^2 */
-  fe_add(e, v3, Av2);                    /* v^3 + Av^2 */
-  fe_add(e, e, v);                       /* v^3 + Av^2 + v */
+  fe_mont_rhs(e, x);                     /* e = x^3 + Ax^2 + x */
   nonsquare = legendre_is_nonsquare(e); 
 
   fe_0(Atemp);
   fe_cmov(Atemp, A, nonsquare);          /* 0, or A if nonsquare */
-  fe_add(u, v, Atemp);                   /* v, or v+A if nonsquare */ 
-  fe_neg(uneg, u);                       /* -v, or -v-A if nonsquare */
-  fe_cmov(u, uneg, nonsquare);           /* v, or -v-A if nonsquare */
-  fe_copy(mont_x, u);
+  fe_add(u, x, Atemp);                   /* x, or x+A if nonsquare */ 
+  fe_neg(uneg, u);                       /* -x, or -x-A if nonsquare */
+  fe_cmov(u, uneg, nonsquare);           /* x, or -x-A if nonsquare */
 }
 
-void hash_to_point(ge_p3* out, const unsigned char* in, const unsigned long in_len)
+void hash_to_point(ge_p3* p, const unsigned char* in, const unsigned long in_len)
 {
   unsigned char hash[64];
-  fe h, mont_x;
+  fe h, u;
   unsigned char sign_bit;
+  ge_p2 p2;
+  ge_p1p1 p1p1;
 
-  /* hash and elligator */
   crypto_hash_sha512(hash, in, in_len);
 
-  sign_bit = hash[31] & 0x80; /* take the high bit as Edwards sign bit */
+  /* take the high bit as Edwards sign bit */
+  sign_bit = (hash[31] & 0x80) >> 7; 
   hash[31] &= 0x7F;
   fe_frombytes(h, hash); 
+  elligator(u, h);
 
-  elligator(mont_x, h);
-  
-  fe ed_y;
-  unsigned char ed_pubkey[32];
-
-  fe_montx_to_edy(ed_y, mont_x);
-  fe_tobytes(ed_pubkey, ed_y);
-  ed_pubkey[31] &= 0x7F;  /* bit should be zero already, but just in case */
-  ed_pubkey[31] |= sign_bit;
-
-  /* decompress full point */
-  /* WARNING - due to timing-variance, don't use with secret inputs! */
-  ge_frombytes_negate_vartime(out, ed_pubkey);
-
-  /* undo the negation */
-  fe_neg(out->X, out->X);
-  fe_neg(out->T, out->T);
+  ge_montx_to_p2(&p2, u, sign_bit);
 
   /* multiply by 8 (cofactor) to map onto the main subgroup,
    * or map small-order points to the neutral element
    * (the latter prevents leaking r mod (2, 4, 8) via U) */
-  ge_p1p1 dbl_result;
+  ge_p2_dbl(&p1p1, &p2);
+  ge_p1p1_to_p2(&p2, &p1p1);
 
-  ge_p3_dbl(&dbl_result, out);
-  ge_p1p1_to_p3(out, &dbl_result);
+  ge_p2_dbl(&p1p1, &p2);
+  ge_p1p1_to_p2(&p2, &p1p1);
 
-  ge_p3_dbl(&dbl_result, out);
-  ge_p1p1_to_p3(out, &dbl_result);
-
-  ge_p3_dbl(&dbl_result, out);
-  ge_p1p1_to_p3(out, &dbl_result);
+  ge_p2_dbl(&p1p1, &p2);
+  ge_p1p1_to_p3(p, &p1p1);
 }
 
 

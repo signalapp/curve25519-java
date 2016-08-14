@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "crypto_hash_sha512.h"
@@ -10,10 +11,20 @@
 #include "utility.h"
 #include "tests.h"
 
-#define MSG_LEN 200
 
-#define ERROR(msg) {if (!silent) print_error(msg); else return -1; }
-#define INFO(msg) {if (!silent) printf("%s\n", msg);}
+#define ERROR(...) do {if (!silent) { printf(__VA_ARGS__); abort(); } else return -1; } while (0)
+#define INFO(...) do {if (!silent) printf(__VA_ARGS__);} while (0)
+
+#define TEST(msg, cond) \
+  do {  \
+    if ((cond)) { \
+      INFO("%s good\n", msg); \
+    } \
+    else { \
+      ERROR("%s BAD!!!\n", msg); \
+    } \
+  } while (0)
+
 
 int sha512_fast_test(int silent)
 {
@@ -33,18 +44,59 @@ int sha512_fast_test(int silent)
   unsigned char sha512_actual_output[64];
 
   crypto_hash_sha512(sha512_actual_output, sha512_input, sizeof(sha512_input));
-  if (memcmp(sha512_actual_output, sha512_correct_output, 64) != 0)
-    ERROR("SHA512 #1 BAD")
-  else
-    INFO("SHA512 #1 good");
+  TEST("SHA512 #1", memcmp(sha512_actual_output, sha512_correct_output, 64) == 0);
 
   sha512_input[111] ^= 1;
 
   crypto_hash_sha512(sha512_actual_output, sha512_input, sizeof(sha512_input));
-  if (memcmp(sha512_actual_output, sha512_correct_output, 64) != 0)
-    INFO("SHA512 #2 good")
-  else
-    ERROR("SHA512 #2 BAD");
+  TEST("SHA512 #2", memcmp(sha512_actual_output, sha512_correct_output, 64) != 0);
+
+  return 0;
+}
+
+int ge_is_small_order_test(int silent)
+{
+  ge_p3 o1, o2, o4a, o4b; 
+
+  fe zero, one, minusone;
+  fe_0(zero);
+  fe_1(one);
+  fe_sub(minusone, zero, one);
+
+  // o1 is the neutral point (order 1)
+  fe_copy(o1.X, zero);
+  fe_copy(o1.Y, one);
+  fe_copy(o1.Z, one);
+  fe_mul(o1.T, o1.X, o1.Y);
+ 
+  // o2 is the order 2 point
+  fe_copy(o2.X, zero);
+  fe_copy(o2.Y, minusone);
+  fe_copy(o2.Z, one);
+  fe_mul(o2.T, o2.X, o2.Y);
+
+  /* TODO check order 4 and 8 points */
+
+  TEST("ge_is_small_order #1", 
+      ge_is_small_order(&o1) && ge_is_small_order(&o2));
+
+  ge_p3 B0, B1, B2, B100;
+  unsigned char scalar[32];
+  memset(scalar, 0, 32);
+
+  ge_scalarmult_base(&B0, scalar);
+  scalar[0] = 1;
+  ge_scalarmult_base(&B1, scalar);
+  scalar[0] = 2;
+  ge_scalarmult_base(&B2, scalar);
+  scalar[0] = 100;
+  ge_scalarmult_base(&B100, scalar);
+
+  TEST("ge_is_small_order #2", 
+      ge_is_small_order(&B0) && 
+      !ge_is_small_order(&B1) && 
+      !ge_is_small_order(&B2) &&
+      !ge_is_small_order(&B100));
 
   return 0;
 }
@@ -60,7 +112,7 @@ int elligator_fast_test(int silent)
   0x44, 0x49, 0x15, 0x89, 0x9d, 0x95, 0xf4, 0x6e
   };
 
-    unsigned char hashtopoint_correct_output[32] = 
+  unsigned char hashtopoint_correct_output1[32] = 
   {
   0xce, 0x89, 0x9f, 0xb2, 0x8f, 0xf7, 0x20, 0x91,
   0x5e, 0x14, 0xf5, 0xb7, 0x99, 0x08, 0xab, 0x17,
@@ -68,7 +120,15 @@ int elligator_fast_test(int silent)
   0x06, 0x36, 0x29, 0x40, 0xed, 0x7d, 0xe7, 0xed
   };
 
-    unsigned char calculateu_correct_output[32] = 
+  unsigned char hashtopoint_correct_output2[32] = 
+  {
+  0xa0, 0x35, 0xbb, 0xa9, 0x4d, 0x30, 0x55, 0x33, 
+  0x0d, 0xce, 0xc2, 0x7f, 0x83, 0xde, 0x79, 0xd0, 
+  0x89, 0x67, 0x72, 0x4c, 0x07, 0x8d, 0x68, 0x9d, 
+  0x61, 0x52, 0x1d, 0xf9, 0x2c, 0x5c, 0xba, 0x77
+  };
+
+  unsigned char calculateu_correct_output[32] = 
   {
   0xa8, 0x36, 0xb5, 0x30, 0xd3, 0xe7, 0x65, 0x54, 
   0x3e, 0x72, 0xc8, 0x87, 0x7d, 0xa4, 0x12, 0x6d, 
@@ -87,41 +147,44 @@ int elligator_fast_test(int silent)
   fe_frombytes(in, bytes);
   elligator(out, in);
   fe_tobytes(bytes, out);
-  if (memcmp(bytes, elligator_correct_output, 32) != 0)
-    ERROR("Elligator BAD!!!")
-  else
-    INFO("Elligator good");
+  TEST("Elligator vector", memcmp(bytes, elligator_correct_output, 32) == 0);
 
-  /* 
-  // Test whether Elligator can calculate Legendre == 0 
-  // Answer appears to be yes, since 2r^2 + 1 == 0 has a solution
-  //
-  fe NEG1;
-  fe ONE;
-  fe TWO;
-  fe_1(ONE);
-  fe_add(TWO, ONE, ONE);
-  fe_neg(NEG1, ONE);
-  printf("NEG1\n");
-  legendre_is_nonsquare(out, NEG1);
-  printf("TWO\n");
-  legendre_is_nonsquare(out, TWO);
-  print_error("done");
-  */
+  /* Elligator(0) == 0 test */
+  fe_0(in);
+  elligator(out, in);
+  TEST("Elligator(0) == 0", memcmp(in, out, 32) == 0);
+
+  /* ge_montx_to_p2(0) -> order2 point test */
+  fe one, negone, zero;
+  fe_1(one);
+  fe_0(zero);
+  fe_sub(negone, zero, one);
+  ge_p2 p2;
+  ge_montx_to_p2(&p2, zero, 0);
+  TEST("ge_montx_to_p2(0) == order 2 point", 
+      fe_isequal(p2.X, zero) &&
+      fe_isequal(p2.Y, negone) &&
+      fe_isequal(p2.Z, one));
 
   /* Hash to point vector test */
   ge_p3 p3;
   unsigned char htp[32];
+  
   for (count=0; count < 32; count++) {
     htp[count] = count;
   }
 
   hash_to_point(&p3, htp, 32);
   ge_p3_tobytes(htp, &p3);
-  if (memcmp(htp, hashtopoint_correct_output, 32) != 0)
-    ERROR("hash_to_point BAD!!!")
-  else
-    INFO("hash_to_point good");
+  TEST("hash_to_point #1", memcmp(htp, hashtopoint_correct_output1, 32) == 0);
+
+  for (count=0; count < 32; count++) {
+    htp[count] = count+1;
+  }
+
+  hash_to_point(&p3, htp, 32);
+  ge_p3_tobytes(htp, &p3);
+  TEST("hash_to_point #2", memcmp(htp, hashtopoint_correct_output2, 32) == 0);
 
   /* calculate_U vector test */
   ge_p3 Bu;
@@ -137,12 +200,7 @@ int elligator_fast_test(int silent)
   }
   sc_clamp(a);
   calculate_Bu_and_U(&Bu, U, Ubuf, a, Umsg, 3);
-
-  if (memcmp(U, calculateu_correct_output, 32) != 0)
-    ERROR("calculate_U BAD!!!")
-  else
-    INFO("calculate_U good");
-
+  TEST("calculate_Bu_and_U vector", memcmp(U, calculateu_correct_output, 32) == 0);
   return 0;
 }
 
@@ -158,6 +216,7 @@ int curvesigs_fast_test(int silent)
     0x0b, 0xd6, 0xc1, 0x97, 0x3f, 0x7d, 0x78, 0x0a, 
     0xb3, 0x95, 0x18, 0x62, 0x68, 0x03, 0xd7, 0x82,
   };
+  const int MSG_LEN  = 200;
   unsigned char privkey[32];
   unsigned char pubkey[32];
   unsigned char signature[64];
@@ -178,23 +237,10 @@ int curvesigs_fast_test(int silent)
 
   curve25519_sign(signature, privkey, msg, MSG_LEN, random);
 
-  if (memcmp(signature, signature_correct, 64) != 0)
-    ERROR("Curvesig incorrect - BAD")
-  else
-    INFO("Curvesig correct - good");
-
-  if (curve25519_verify(signature, pubkey, msg, MSG_LEN) == 0)
-    INFO("Curvesig #1 verified - good")
-  else
-    ERROR("Curvesig #1 didn't verify - BAD");
-
+  TEST("Curvesig sign", memcmp(signature, signature_correct, 64) == 0);
+  TEST("Curvesig verify #1", curve25519_verify(signature, pubkey, msg, MSG_LEN) == 0);
   signature[0] ^= 1;
-
-  if (curve25519_verify(signature, pubkey, msg, MSG_LEN) == 0)
-    ERROR("Curvesig #2 verified - BAD")
-  else
-    INFO("Curvesig #2 didn't verify - good");
-
+  TEST("Curvesig verify #2", curve25519_verify(signature, pubkey, msg, MSG_LEN) != 0);
   return 0;
 }
 
@@ -210,6 +256,7 @@ int xdsa_fast_test(int silent)
   0x69, 0xad, 0xa5, 0x76, 0xd6, 0x3d, 0xca, 0xf2, 
   0xac, 0x32, 0x6c, 0x11, 0xd0, 0xb9, 0x77, 0x02,
   };
+  const int MSG_LEN  = 200;
   unsigned char privkey[32];
   unsigned char pubkey[32];
   unsigned char signature[64];
@@ -229,24 +276,10 @@ int xdsa_fast_test(int silent)
   curve25519_keygen(pubkey, privkey);
 
   xdsa_sign(signature, privkey, msg, MSG_LEN, random);
-
-  if (memcmp(signature, signature_correct, 64) != 0)
-    ERROR("XDSA incorrect - BAD")
-  else
-    INFO("XDSA correct - good");
-
-  if (xdsa_verify(signature, pubkey, msg, MSG_LEN) == 0)
-    INFO("XDSA #1 verified - good")
-  else
-    ERROR("XDSA #1 didn't verify - BAD");
-
+  TEST("XDSA sign", memcmp(signature, signature_correct, 64) == 0);
+  TEST("XDSA verify #1", xdsa_verify(signature, pubkey, msg, MSG_LEN) == 0);
   signature[0] ^= 1;
-
-  if (xdsa_verify(signature, pubkey, msg, MSG_LEN) == 0)
-    ERROR("XDSA #2 verified - BAD")
-  else
-    INFO("XDSA #2 didn't verify - good");
-
+  TEST("XDSA verify #2", xdsa_verify(signature, pubkey, msg, MSG_LEN) != 0);
   return 0;
 }
 
@@ -266,6 +299,7 @@ int uxdsa_fast_test(int silent)
   0x29, 0xd9, 0xfc, 0xee, 0x1c, 0x08, 0x6d, 0x5a, 
   0x28, 0xa1, 0x27, 0xf0, 0x06, 0xb9, 0x79, 0x03
   };
+  const int MSG_LEN  = 200;
   unsigned char privkey[32];
   unsigned char pubkey[32];
   unsigned char signature[96];
@@ -286,22 +320,10 @@ int uxdsa_fast_test(int silent)
 
   uxdsa_sign(signature, privkey, msg, MSG_LEN, random);
 
-  if (memcmp(signature, signature_correct, 96) != 0)
-    ERROR("UXDSA incorrect - BAD")
-  else
-    INFO("UXDSA correct - good");
-
-  if (uxdsa_verify(signature, pubkey, msg, MSG_LEN) == 0)
-    INFO("UXDSA #1 verified - good")
-  else
-    ERROR("UXDSA #1 didn't verify - BAD");
-
+  TEST("UXDSA sign", memcmp(signature, signature_correct, 96) == 0);
+  TEST("UXDSA verify #1", uxdsa_verify(signature, pubkey, msg, MSG_LEN) == 0);
   signature[0] ^= 1;
-
-  if (uxdsa_verify(signature, pubkey, msg, MSG_LEN) == 0)
-    ERROR("UXDSA #2 verified - BAD")
-  else
-    INFO("UXDSA #2 didn't verify - good");
+  TEST("UXDSA verify #2", uxdsa_verify(signature, pubkey, msg, MSG_LEN) != 0);
 
   /* Test U */
   unsigned char sigprev[96];
@@ -311,16 +333,8 @@ int uxdsa_fast_test(int silent)
   random[0] ^= 1; 
   uxdsa_sign(signature, privkey, msg, MSG_LEN, random);
  
-  if (memcmp(signature, sigprev, 32) != 0)
-    ERROR("UXDSA U value changed - BAD")
-  else
-    INFO("UXDSA U value constant - good");
-
-  if (memcmp(signature+32, sigprev+32, 64) == 0)
-    ERROR("UXDSA (h, s) values didn't change - BAD")
-  else
-    INFO("UXDSA (h, s) values changed - good");
-
+  TEST("UXDSA U value changed", memcmp(signature, sigprev, 32) == 0);
+  TEST("UXDSA (h, s) changed", memcmp(signature+32, sigprev+32, 64) != 0);
   return 0;
 }
 
@@ -339,6 +353,7 @@ int curvesigs_slow_test(int silent, int iterations)
   };
 
   int count;  
+  const int MSG_LEN  = 200;
   unsigned char privkey[32];
   unsigned char pubkey[32];
   unsigned char signature[64];
@@ -352,7 +367,7 @@ int curvesigs_slow_test(int silent, int iterations)
   memset(random, 0, 64);
 
   /* Signature random test */
-  INFO("Pseudorandom curvesigs...");
+  INFO("Pseudorandom curvesigs...\n");
   for (count = 1; count <= iterations; count++) {
     unsigned char b[64];
     crypto_hash_sha512(b, signature, 64);
@@ -366,21 +381,21 @@ int curvesigs_slow_test(int silent, int iterations)
     curve25519_sign(signature, privkey, msg, MSG_LEN, random);
 
     if (curve25519_verify(signature, pubkey, msg, MSG_LEN) != 0)
-      ERROR("Curvesig verify failure #1");
+      ERROR("Curvesig verify failure #1 %d\n", count);
 
     if (b[63] & 1)
       signature[count % 64] ^= 1;
     else
       msg[count % MSG_LEN] ^= 1;
     if (curve25519_verify(signature, pubkey, msg, MSG_LEN) == 0)
-      ERROR("Curvesig verify failure #2");
+      ERROR("Curvesig verify failure #2 %d\n", count);
       
     if (count == 10000) {
       if (memcmp(signature, signature_10k_correct, 64) != 0)
-        ERROR("Curvesig signature 10K doesn't match");
+        ERROR("Curvesig signature 10K doesn't match %d\n", count);
     }
   }
-  INFO("good");
+  INFO("good\n");
   return 1;
 }
 
@@ -399,6 +414,7 @@ int xdsa_slow_test(int silent, int iterations)
   };
 
   int count;  
+  const int MSG_LEN  = 200;
   unsigned char privkey[32];
   unsigned char pubkey[32];
   unsigned char signature[96];
@@ -412,7 +428,7 @@ int xdsa_slow_test(int silent, int iterations)
   memset(random, 0, 64);
 
   /* Signature random test */
-  INFO("Pseudorandom XDSA...");
+  INFO("Pseudorandom XDSA...\n");
   for (count = 1; count <= iterations; count++) {
     unsigned char b[64];
     crypto_hash_sha512(b, signature, 64);
@@ -426,21 +442,21 @@ int xdsa_slow_test(int silent, int iterations)
     xdsa_sign(signature, privkey, msg, MSG_LEN, random);
 
     if (xdsa_verify(signature, pubkey, msg, MSG_LEN) != 0)
-      ERROR("XDSA verify failure #1");
+      ERROR("XDSA verify failure #1 %d\n", count);
 
     if (b[63] & 1)
       signature[count % 64] ^= 1;
     else
       msg[count % MSG_LEN] ^= 1;
     if (xdsa_verify(signature, pubkey, msg, MSG_LEN) == 0)
-      ERROR("XDSA verify failure #2");
+      ERROR("XDSA verify failure #2 %d\n", count);
 
     if (count == 10000) {
       if (memcmp(signature, signature_10k_correct, 64) != 0)
-        ERROR("XDSA signature 10K doesn't match");
+        ERROR("XDSA signature 10K doesn't match %d\n", count);
     }
   }
-  INFO("good");
+  INFO("good\n");
   return 1;
 }
 
@@ -460,6 +476,7 @@ int xdsa_to_curvesigs_slow_test(int silent, int iterations)
   };
 
   int count;  
+  const int MSG_LEN  = 200;
   unsigned char privkey[32];
   unsigned char pubkey[32];
   unsigned char signature[96];
@@ -473,7 +490,7 @@ int xdsa_to_curvesigs_slow_test(int silent, int iterations)
   memset(random, 0, 64);
 
   /* Signature random test */
-  INFO("Pseudorandom XDSA/Curvesigs...");
+  INFO("Pseudorandom XDSA/Curvesigs...\n");
   for (count = 1; count <= iterations; count++) {
     unsigned char b[64];
     crypto_hash_sha512(b, signature, 64);
@@ -487,21 +504,21 @@ int xdsa_to_curvesigs_slow_test(int silent, int iterations)
     xdsa_sign(signature, privkey, msg, MSG_LEN, random);
 
     if (curve25519_verify(signature, pubkey, msg, MSG_LEN) != 0)
-      ERROR("XDSA/Curvesigs verify failure #1");
+      ERROR("XDSA/Curvesigs verify failure #1 %d\n", count);
 
     if (b[63] & 1)
       signature[count % 64] ^= 1;
     else
       msg[count % MSG_LEN] ^= 1;
     if (curve25519_verify(signature, pubkey, msg, MSG_LEN) == 0)
-      ERROR("XDSA/Curvesigs verify failure #2");
+      ERROR("XDSA/Curvesigs verify failure #2 %d\n", count);
 
     if (count == 10000) {
       if (memcmp(signature, signature_10k_correct, 64) != 0)
-        ERROR("XDSA/Curvesigs signature 10K doesn't match");
+        ERROR("XDSA/Curvesigs signature 10K doesn't match %d\n", count);
     }
   }
-  INFO("good");
+  INFO("good\n");
   return 1;
 }
 
@@ -524,6 +541,7 @@ int uxdsa_slow_test(int silent, int iterations)
   };
 
   int count;  
+  const int MSG_LEN  = 200;
   unsigned char privkey[32];
   unsigned char pubkey[32];
   unsigned char signature[96];
@@ -536,7 +554,7 @@ int uxdsa_slow_test(int silent, int iterations)
   memset(msg, 0, MSG_LEN);
   memset(random, 0, 64);
 
-  INFO("Pseudorandom UXDSA...");
+  INFO("Pseudorandom UXDSA...\n");
   for (count = 1; count <= iterations; count++) {
     unsigned char b[64];
     crypto_hash_sha512(b, signature, 96);
@@ -550,21 +568,21 @@ int uxdsa_slow_test(int silent, int iterations)
     uxdsa_sign(signature, privkey, msg, MSG_LEN, random);
 
     if (uxdsa_verify(signature, pubkey, msg, MSG_LEN) != 0)
-      ERROR("UXDSA verify failure #1");
+      ERROR("UXDSA verify failure #1 %d\n", count);
 
     if (b[63] & 1)
       signature[count % 96] ^= 1;
     else
       msg[count % MSG_LEN] ^= 1;
     if (uxdsa_verify(signature, pubkey, msg, MSG_LEN) == 0)
-      ERROR("UXDSA verify failure #2");
+      ERROR("UXDSA verify failure #2 %d\n", count);
 
     if (count == 10000) {
       if (memcmp(signature, signature_10k_correct, 96) != 0)
-        ERROR("UXDSA 10K doesn't match");
+        ERROR("UXDSA 10K doesn't match %d\n", count);
     }
   }
-  INFO("good");
+  INFO("good\n");
   return 1;
 }
 
@@ -572,6 +590,8 @@ int all_fast_tests(int silent)
 {
   int result;
   if ((result = sha512_fast_test(silent)) != 0)
+    return result;
+  if ((result = ge_is_small_order_test(silent)) != 0)
     return result;
   if ((result = elligator_fast_test(silent)) != 0)
     return result;

@@ -41,8 +41,8 @@ int curve25519_verify(const unsigned char* signature,
                       const unsigned char* curve25519_pubkey,
                       const unsigned char* msg, const unsigned long msg_len)
 {
-  fe mont_x;
-  fe ed_y;
+  fe u;
+  fe y;
   unsigned char ed_pubkey[32];
   unsigned long long some_retval;
   unsigned char *verifybuf = NULL; /* working buffer */
@@ -61,18 +61,18 @@ int curve25519_verify(const unsigned char* signature,
 
 
   /* Convert the Curve25519 public key into an Ed25519 public key.  In
-     particular, convert Curve25519's "montgomery" x-coordinate into an
+     particular, convert Curve25519's "montgomery" x-coordinate (u) into an
      Ed25519 "edwards" y-coordinate:
 
-     ed_y = (mont_x - 1) / (mont_x + 1)
+     y = (u - 1) / (u + 1)
 
-     NOTE: mont_x=-1 is converted to ed_y=0 since fe_invert is mod-exp
+     NOTE: u=-1 is converted to y=0 since fe_invert is mod-exp
 
      Then move the sign bit into the pubkey from the signature.
   */
-  fe_frombytes(mont_x, curve25519_pubkey);
-  fe_montx_to_edy(ed_y, mont_x);
-  fe_tobytes(ed_pubkey, ed_y);
+  fe_frombytes(u, curve25519_pubkey);
+  fe_montx_to_edy(y, u);
+  fe_tobytes(ed_pubkey, y);
 
   /* Copy the sign bit, and remove it from signature */
   ed_pubkey[31] &= 0x7F;  /* bit should be zero already, but just in case */

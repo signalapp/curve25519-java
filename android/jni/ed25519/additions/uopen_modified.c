@@ -45,6 +45,10 @@ int crypto_usign_open_modified(
   if (memcmp(strict, s, 32) != 0)
     goto badsig;
 
+  /* Reject U (actually -U) if small order */
+  if (ge_is_small_order(&U))
+    goto badsig;
+
   // R = sB + h(-A)
   ge_double_scalarmult_vartime(&R,h,&A,s);
 

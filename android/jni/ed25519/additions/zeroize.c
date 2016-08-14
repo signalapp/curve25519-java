@@ -12,5 +12,5 @@ void zeroize(unsigned char* b, size_t len)
 void zeroize_stack()
 {
   unsigned char m[ZEROIZE_STACK_SIZE];
-  zeroize(m, sizeof m);
+  zeroize(m, ZEROIZE_STACK_SIZE);
 }

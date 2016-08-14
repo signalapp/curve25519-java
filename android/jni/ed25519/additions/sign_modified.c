@@ -45,5 +45,9 @@ int crypto_sign_modified(
   sc_reduce(hram);
   sc_muladd(sm + 32,hram,sk,nonce); /* NEW: Use privkey directly */
 
+  /* Erase any traces of private scalar or
+     nonce left in the stack from sc_muladd */
+  zeroize_stack();
+  zeroize(nonce, 64);
   return 0;
 }
