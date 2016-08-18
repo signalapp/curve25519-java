@@ -3,13 +3,14 @@
 #include "ge.h"
 #include "crypto_additions.h"
 #include "zeroize.h"
+#include "uxeddsa.h"
 
-int uxdsa_sign(unsigned char* signature_out,
-               const unsigned char* curve25519_privkey,
-               const unsigned char* msg, const unsigned long msg_len,
-               const unsigned char* random)
+int uxed25519_sign(unsigned char* signature_out,
+                   const unsigned char* curve25519_privkey,
+                   const unsigned char* msg, const unsigned long msg_len,
+                   const unsigned char* random)
 {
-  unsigned char a[32];
+  unsigned char a[32], aneg[32];
   unsigned char A[32];
   ge_p3 Bu, ed_pubkey_point;
   unsigned char sigbuf[MAX_MSG_LEN + 160]; /* working buffer */
@@ -24,13 +25,11 @@ int uxdsa_sign(unsigned char* signature_out,
   ge_p3_tobytes(A, &ed_pubkey_point);
 
   /* Force Edwards sign bit to zero */
-  sign_bit = A[31] & 0x80;
-  if (sign_bit) {
-    sc_neg(a, curve25519_privkey);
-    A[31] &= 0x7F;
-  }
-  else
-    memcpy(a, curve25519_privkey, 32);
+  sign_bit = (A[31] & 0x80) >> 7;
+  memcpy(a, curve25519_privkey, 32);
+  sc_neg(aneg, a);
+  sc_cmov(a, aneg, sign_bit); 
+  A[31] &= 0x7F;
   
   calculate_Bu_and_U(&Bu, signature_out, sigbuf, a, msg, msg_len);
 
@@ -42,9 +41,9 @@ int uxdsa_sign(unsigned char* signature_out,
   return 0;
 }
 
-int uxdsa_verify(const unsigned char* signature,
-                 const unsigned char* curve25519_pubkey,
-                 const unsigned char* msg, const unsigned long msg_len)
+int uxed25519_verify(const unsigned char* signature,
+                     const unsigned char* curve25519_pubkey,
+                     const unsigned char* msg, const unsigned long msg_len)
 {
   fe u; 
   fe y;

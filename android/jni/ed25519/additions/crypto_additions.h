@@ -8,8 +8,8 @@
 
 #define MAX_MSG_LEN 256
 
-/* aneg = -a */
 void sc_neg(unsigned char *b, const unsigned char *a);
+void sc_cmov(unsigned char* f, const unsigned char* g, unsigned char b);
 
 int fe_isequal(const fe f, const fe g);
 void fe_mont_rhs(fe v2, const fe u);
@@ -58,7 +58,7 @@ int crypto_usign_modified(
 int crypto_usign_open_modified(
   unsigned char *m,unsigned long long *mlen,
   const unsigned char *sm,unsigned long long smlen,
-  const unsigned char *pk, ge_p3* Bu);
+  const unsigned char *pk, const ge_p3* Bu);
 
 
 #endif

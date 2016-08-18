@@ -4,12 +4,13 @@
 #include "crypto_hash_sha512.h"
 #include "keygen.h"
 #include "curve_sigs.h"
-#include "xdsa.h"
-#include "uxdsa.h"
+#include "xeddsa.h"
+#include "uxeddsa.h"
 #include "crypto_additions.h"
 #include "ge.h"
 #include "utility.h"
 #include "tests.h"
+#include <assert.h>
 
 
 #define ERROR(...) do {if (!silent) { printf(__VA_ARGS__); abort(); } else return -1; } while (0)
@@ -75,10 +76,32 @@ int ge_is_small_order_test(int silent)
   fe_copy(o2.Z, one);
   fe_mul(o2.T, o2.X, o2.Y);
 
-  /* TODO check order 4 and 8 points */
+  /* TODO check order 8 points */
+
+  /* sqrt(-1) */
+  static unsigned char i_bytes[32] = {
+    0xb0, 0xa0, 0x0e, 0x4a, 0x27, 0x1b, 0xee, 0xc4,
+    0x78, 0xe4, 0x2f, 0xad, 0x06, 0x18, 0x43, 0x2f,
+    0xa7, 0xd7, 0xfb, 0x3d, 0x99, 0x00, 0x4d, 0x2b,
+    0x0b, 0xdf, 0xc1, 0x4f, 0x80, 0x24, 0x83, 0x2b
+  };
+  fe i;
+  fe_frombytes(i, i_bytes);
+
+  fe_copy(o4a.X, i);
+  fe_copy(o4a.Y, zero);
+  fe_copy(o4a.Z, one);
+  fe_mul(o4a.T, o4a.X, o4a.Y);
+
+  fe_neg(o4b.X, o4a.X);
+  fe_copy(o4b.Y, zero);
+  fe_copy(o4b.Z, one);
+  fe_mul(o4b.T, o4b.X, o4b.Y);
+
 
   TEST("ge_is_small_order #1", 
-      ge_is_small_order(&o1) && ge_is_small_order(&o2));
+      ge_is_small_order(&o1) && ge_is_small_order(&o2) &&
+      ge_is_small_order(&o4a) && ge_is_small_order(&o4b));
 
   ge_p3 B0, B1, B2, B100;
   unsigned char scalar[32];
@@ -244,7 +267,7 @@ int curvesigs_fast_test(int silent)
   return 0;
 }
 
-int xdsa_fast_test(int silent)
+int xeddsa_fast_test(int silent)
 {
   unsigned char signature_correct[64] = {
   0x11, 0xc7, 0xf3, 0xe6, 0xc4, 0xdf, 0x9e, 0x8a, 
@@ -275,15 +298,15 @@ int xdsa_fast_test(int silent)
   /* Signature vector test */
   curve25519_keygen(pubkey, privkey);
 
-  xdsa_sign(signature, privkey, msg, MSG_LEN, random);
-  TEST("XDSA sign", memcmp(signature, signature_correct, 64) == 0);
-  TEST("XDSA verify #1", xdsa_verify(signature, pubkey, msg, MSG_LEN) == 0);
+  xed25519_sign(signature, privkey, msg, MSG_LEN, random);
+  TEST("XEdDSA sign", memcmp(signature, signature_correct, 64) == 0);
+  TEST("XEdDSA verify #1", xed25519_verify(signature, pubkey, msg, MSG_LEN) == 0);
   signature[0] ^= 1;
-  TEST("XDSA verify #2", xdsa_verify(signature, pubkey, msg, MSG_LEN) != 0);
+  TEST("XEdDSA verify #2", xed25519_verify(signature, pubkey, msg, MSG_LEN) != 0);
   return 0;
 }
 
-int uxdsa_fast_test(int silent)
+int uxeddsa_fast_test(int silent)
 {
   unsigned char signature_correct[96] = {
   0x66, 0x51, 0x0b, 0x68, 0x9e, 0xb7, 0xd8, 0x55, 
@@ -318,12 +341,12 @@ int uxdsa_fast_test(int silent)
   /* Signature vector test */
   curve25519_keygen(pubkey, privkey);
 
-  uxdsa_sign(signature, privkey, msg, MSG_LEN, random);
+  uxed25519_sign(signature, privkey, msg, MSG_LEN, random);
 
-  TEST("UXDSA sign", memcmp(signature, signature_correct, 96) == 0);
-  TEST("UXDSA verify #1", uxdsa_verify(signature, pubkey, msg, MSG_LEN) == 0);
+  TEST("UXEdDSA sign", memcmp(signature, signature_correct, 96) == 0);
+  TEST("UXEdDSA verify #1", uxed25519_verify(signature, pubkey, msg, MSG_LEN) == 0);
   signature[0] ^= 1;
-  TEST("UXDSA verify #2", uxdsa_verify(signature, pubkey, msg, MSG_LEN) != 0);
+  TEST("UXEdDSA verify #2", uxed25519_verify(signature, pubkey, msg, MSG_LEN) != 0);
 
   /* Test U */
   unsigned char sigprev[96];
@@ -331,10 +354,10 @@ int uxdsa_fast_test(int silent)
   sigprev[0] ^= 1; /* undo prev disturbance */
 
   random[0] ^= 1; 
-  uxdsa_sign(signature, privkey, msg, MSG_LEN, random);
+  uxed25519_sign(signature, privkey, msg, MSG_LEN, random);
  
-  TEST("UXDSA U value changed", memcmp(signature, sigprev, 32) == 0);
-  TEST("UXDSA (h, s) changed", memcmp(signature+32, sigprev+32, 64) != 0);
+  TEST("UXEdDSA U value changed", memcmp(signature, sigprev, 32) == 0);
+  TEST("UXEdDSA (h, s) changed", memcmp(signature+32, sigprev+32, 64) != 0);
   return 0;
 }
 
@@ -394,12 +417,18 @@ int curvesigs_slow_test(int silent, int iterations)
       if (memcmp(signature, signature_10k_correct, 64) != 0)
         ERROR("Curvesig signature 10K doesn't match %d\n", count);
     }
+    if (count == 100000)
+      print_bytes("100K curvesigs", signature, 64);
+    if (count == 1000000)
+      print_bytes("1M curvesigs", signature, 64);
+    if (count == 10000000)
+      print_bytes("10M curvesigs", signature, 64);
   }
   INFO("good\n");
-  return 1;
+  return 0;
 }
 
-int xdsa_slow_test(int silent, int iterations)
+int xeddsa_slow_test(int silent, int iterations)
 {
 
   unsigned char signature_10k_correct[64] = {
@@ -428,7 +457,7 @@ int xdsa_slow_test(int silent, int iterations)
   memset(random, 0, 64);
 
   /* Signature random test */
-  INFO("Pseudorandom XDSA...\n");
+  INFO("Pseudorandom XEdDSA...\n");
   for (count = 1; count <= iterations; count++) {
     unsigned char b[64];
     crypto_hash_sha512(b, signature, 64);
@@ -439,28 +468,34 @@ int xdsa_slow_test(int silent, int iterations)
     sc_clamp(privkey);
     curve25519_keygen(pubkey, privkey);
 
-    xdsa_sign(signature, privkey, msg, MSG_LEN, random);
+    xed25519_sign(signature, privkey, msg, MSG_LEN, random);
 
-    if (xdsa_verify(signature, pubkey, msg, MSG_LEN) != 0)
-      ERROR("XDSA verify failure #1 %d\n", count);
+    if (xed25519_verify(signature, pubkey, msg, MSG_LEN) != 0)
+      ERROR("XEdDSA verify failure #1 %d\n", count);
 
     if (b[63] & 1)
       signature[count % 64] ^= 1;
     else
       msg[count % MSG_LEN] ^= 1;
-    if (xdsa_verify(signature, pubkey, msg, MSG_LEN) == 0)
-      ERROR("XDSA verify failure #2 %d\n", count);
+    if (xed25519_verify(signature, pubkey, msg, MSG_LEN) == 0)
+      ERROR("XEdDSA verify failure #2 %d\n", count);
 
     if (count == 10000) {
       if (memcmp(signature, signature_10k_correct, 64) != 0)
-        ERROR("XDSA signature 10K doesn't match %d\n", count);
+        ERROR("XEDSA signature 10K doesn't match %d\n", count);
     }
+    if (count == 100000)
+      print_bytes("100K XEdDSA", signature, 64);
+    if (count == 1000000)
+      print_bytes("1M XEdDSA", signature, 64);
+    if (count == 10000000)
+      print_bytes("10M XEdDSA", signature, 64);
   }
   INFO("good\n");
-  return 1;
+  return 0;
 }
 
-int xdsa_to_curvesigs_slow_test(int silent, int iterations)
+int xeddsa_to_curvesigs_slow_test(int silent, int iterations)
 {
 
   unsigned char signature_10k_correct[64] = {
@@ -490,7 +525,7 @@ int xdsa_to_curvesigs_slow_test(int silent, int iterations)
   memset(random, 0, 64);
 
   /* Signature random test */
-  INFO("Pseudorandom XDSA/Curvesigs...\n");
+  INFO("Pseudorandom XEdDSA/Curvesigs...\n");
   for (count = 1; count <= iterations; count++) {
     unsigned char b[64];
     crypto_hash_sha512(b, signature, 64);
@@ -501,28 +536,34 @@ int xdsa_to_curvesigs_slow_test(int silent, int iterations)
     sc_clamp(privkey);
     curve25519_keygen(pubkey, privkey);
 
-    xdsa_sign(signature, privkey, msg, MSG_LEN, random);
+    xed25519_sign(signature, privkey, msg, MSG_LEN, random);
 
     if (curve25519_verify(signature, pubkey, msg, MSG_LEN) != 0)
-      ERROR("XDSA/Curvesigs verify failure #1 %d\n", count);
+      ERROR("XEdDSA/Curvesigs verify failure #1 %d\n", count);
 
     if (b[63] & 1)
       signature[count % 64] ^= 1;
     else
       msg[count % MSG_LEN] ^= 1;
     if (curve25519_verify(signature, pubkey, msg, MSG_LEN) == 0)
-      ERROR("XDSA/Curvesigs verify failure #2 %d\n", count);
+      ERROR("XEdDSA/Curvesigs verify failure #2 %d\n", count);
 
     if (count == 10000) {
       if (memcmp(signature, signature_10k_correct, 64) != 0)
-        ERROR("XDSA/Curvesigs signature 10K doesn't match %d\n", count);
+        ERROR("XEdDSA/Curvesigs signature 10K doesn't match %d\n", count);
     }
+    if (count == 100000)
+      print_bytes("100K XEdDSA/C", signature, 64);
+    if (count == 1000000)
+      print_bytes("1M XEdDSA/C", signature, 64);
+    if (count == 10000000)
+      print_bytes("10M XEdDSA/C", signature, 64);
   }
   INFO("good\n");
-  return 1;
+  return 0;
 }
 
-int uxdsa_slow_test(int silent, int iterations)
+int uxeddsa_slow_test(int silent, int iterations)
 {
 
   unsigned char signature_10k_correct[96] = {
@@ -554,7 +595,7 @@ int uxdsa_slow_test(int silent, int iterations)
   memset(msg, 0, MSG_LEN);
   memset(random, 0, 64);
 
-  INFO("Pseudorandom UXDSA...\n");
+  INFO("Pseudorandom UXEdDSA...\n");
   for (count = 1; count <= iterations; count++) {
     unsigned char b[64];
     crypto_hash_sha512(b, signature, 96);
@@ -565,25 +606,33 @@ int uxdsa_slow_test(int silent, int iterations)
     sc_clamp(privkey);
     curve25519_keygen(pubkey, privkey);
 
-    uxdsa_sign(signature, privkey, msg, MSG_LEN, random);
+    uxed25519_sign(signature, privkey, msg, MSG_LEN, random);
 
-    if (uxdsa_verify(signature, pubkey, msg, MSG_LEN) != 0)
-      ERROR("UXDSA verify failure #1 %d\n", count);
+    if (uxed25519_verify(signature, pubkey, msg, MSG_LEN) != 0)
+      ERROR("UXEdDSA verify failure #1 %d\n", count);
 
     if (b[63] & 1)
       signature[count % 96] ^= 1;
     else
       msg[count % MSG_LEN] ^= 1;
-    if (uxdsa_verify(signature, pubkey, msg, MSG_LEN) == 0)
-      ERROR("UXDSA verify failure #2 %d\n", count);
+
+    if (uxed25519_verify(signature, pubkey, msg, MSG_LEN) == 0)
+      ERROR("UXEdDSA verify failure #2 %d\n", count);
 
     if (count == 10000) {
       if (memcmp(signature, signature_10k_correct, 96) != 0)
-        ERROR("UXDSA 10K doesn't match %d\n", count);
+        ERROR("UXEDDSA 10K doesn't match %d\n", count);
     }
+
+    if (count == 100000)
+      print_bytes("100K UXEdDSA", signature, 96);
+    if (count == 1000000)
+      print_bytes("1M UXEdDSA", signature, 96);
+    if (count == 10000000)
+      print_bytes("10M UXEdDSA", signature, 96);
   }
   INFO("good\n");
-  return 1;
+  return 0;
 }
 
 int all_fast_tests(int silent)
@@ -597,9 +646,9 @@ int all_fast_tests(int silent)
     return result;
   if ((result = curvesigs_fast_test(silent)) != 0)
     return result;
-  if ((result = xdsa_fast_test(silent)) != 0)
+  if ((result = xeddsa_fast_test(silent)) != 0)
     return result;
-  if ((result = uxdsa_fast_test(silent)) != 0)
+  if ((result = uxeddsa_fast_test(silent)) != 0)
     return result;
 
   return 0;

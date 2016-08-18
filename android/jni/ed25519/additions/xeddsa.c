@@ -4,13 +4,14 @@
 #include "crypto_sign.h"
 #include "crypto_additions.h"
 #include "zeroize.h"
+#include "xeddsa.h" 
 
-int xdsa_sign(unsigned char* signature_out,
-              const unsigned char* curve25519_privkey,
-              const unsigned char* msg, const unsigned long msg_len,
-              const unsigned char* random)
+int xed25519_sign(unsigned char* signature_out,
+                  const unsigned char* curve25519_privkey,
+                  const unsigned char* msg, const unsigned long msg_len,
+                  const unsigned char* random)
 {
-  unsigned char a[32];
+  unsigned char a[32], aneg[32];
   unsigned char A[32];
   ge_p3 ed_pubkey_point;
   unsigned char *sigbuf; /* working buffer */
@@ -26,13 +27,11 @@ int xdsa_sign(unsigned char* signature_out,
   ge_p3_tobytes(A, &ed_pubkey_point);
 
   /* Force Edwards sign bit to zero */
-  sign_bit = A[31] & 0x80;
-  if (sign_bit) {
-    sc_neg(a, curve25519_privkey);
-    A[31] &= 0x7F;
-  }
-  else
-    memcpy(a, curve25519_privkey, 32);
+  sign_bit = (A[31] & 0x80) >> 7;
+  memcpy(a, curve25519_privkey, 32);
+  sc_neg(aneg, a);
+  sc_cmov(a, aneg, sign_bit); 
+  A[31] &= 0x7F;
 
   /* Perform an Ed25519 signature with explicit private key */
   crypto_sign_modified(sigbuf, msg, msg_len, a, A, random);
@@ -43,9 +42,9 @@ int xdsa_sign(unsigned char* signature_out,
   return 0;
 }
 
-int xdsa_verify(const unsigned char* signature,
-                const unsigned char* curve25519_pubkey,
-                const unsigned char* msg, const unsigned long msg_len)
+int xed25519_verify(const unsigned char* signature,
+                    const unsigned char* curve25519_pubkey,
+                    const unsigned char* msg, const unsigned long msg_len)
 {
   fe u;
   fe y;

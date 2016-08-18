@@ -1,5 +1,4 @@
 #include <assert.h>
-#include "crypto_verify_32.h"
 #include "fe.h"
 #include "crypto_additions.h"
 
@@ -40,7 +39,7 @@ void fe_sqrt(fe out, const fe a)
   /* note b^4 == a^2, so b^2 == a or -a
    * if b^2 != a, multiply it by sqrt(-1) */
   fe_mul(bi, b, i);  
-  fe_cmov(b, bi, crypto_verify_32((unsigned char*)a, (unsigned char*)b2) & 1);
+  fe_cmov(b, bi, 1 ^ fe_isequal(b2, a));
   fe_copy(out, b);
 
   /* PRECONDITION: out^2 == a */ 

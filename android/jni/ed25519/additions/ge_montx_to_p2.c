@@ -1,7 +1,6 @@
 #include "fe.h"
 #include "ge.h"
 #include "assert.h"
-#include "crypto_verify_32.h"
 #include "crypto_additions.h"
 #include "utility.h"
 
@@ -30,7 +29,7 @@ void ge_montx_to_p2(ge_p2* p, const fe u, const unsigned char ed_sign_bit)
 
   fe_mul(x, u, A);             /* x = u * sqrt(-(A+2)) */
   fe_invert(iv, v);            /* 1/v */
-  fe_mul(x, x, iv);            /* x = (u/v) * sqrt(A+2) */
+  fe_mul(x, x, iv);            /* x = (u/v) * sqrt(-(A+2)) */
 
   fe_neg(nx, x);               /* negate x to match sign bit */
   fe_cmov(x, nx, fe_isnegative(x) ^ ed_sign_bit);
@@ -38,21 +37,6 @@ void ge_montx_to_p2(ge_p2* p, const fe u, const unsigned char ed_sign_bit)
   fe_copy(p->X, x);
   fe_copy(p->Y, y);
   fe_1(p->Z);
-
-  /* POSTCONDITION: check that p maps back to u */
-#ifndef NDEBUG
-  {
-  fe one, u1, u2, ucheck;
-
-  fe_1(one);
-  fe_add(u1, one, p->Y);
-  fe_sub(u2, one, p->Y);
-  fe_invert(u2, u2);
-  fe_mul(ucheck, u1, u2);
-
-  assert(fe_isequal(u, ucheck));
-  }
-#endif
 
  /* POSTCONDITION: check that p->X and p->Y satisfy the Ed curve equation */
  /* -x^2 + y^2 = 1 + dx^2y^2 */

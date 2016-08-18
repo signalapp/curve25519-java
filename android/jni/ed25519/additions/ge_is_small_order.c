@@ -1,6 +1,5 @@
 #include "crypto_additions.h"
 #include "ge.h"
-#include "crypto_verify_32.h"
 #include "utility.h"
 #include "stdio.h"
 

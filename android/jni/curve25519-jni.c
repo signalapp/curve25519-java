@@ -11,8 +11,8 @@
 #include <jni.h>
 #include "curve25519-donna.h"
 #include "curve_sigs.h"
-#include "xdsa.h"
-#include "uxdsa.h"
+#include "xeddsa.h"
+#include "uxeddsa.h"
 
 JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_generatePrivateKey
   (JNIEnv *env, jobject obj, jbyteArray random)
@@ -72,7 +72,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519
     uint8_t*   messageBytes    = (uint8_t*)(*env)->GetByteArrayElements(env, message, 0);
     jsize      messageLength   = (*env)->GetArrayLength(env, message);
 
-    int result = xdsa_sign(signatureBytes, privateKeyBytes, messageBytes, messageLength, randomBytes);
+    int result = xed25519_sign(signatureBytes, privateKeyBytes, messageBytes, messageLength, randomBytes);
 
     (*env)->ReleaseByteArrayElements(env, signature, signatureBytes, 0);
     (*env)->ReleaseByteArrayElements(env, random, randomBytes, 0);
@@ -110,7 +110,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519
     uint8_t*   messageBytes    = (uint8_t*)(*env)->GetByteArrayElements(env, message, 0);
     jsize      messageLength   = (*env)->GetArrayLength(env, message);
 
-    int result = uxdsa_sign(signatureBytes, privateKeyBytes, messageBytes, messageLength, randomBytes);
+    int result = uxed25519_sign(signatureBytes, privateKeyBytes, messageBytes, messageLength, randomBytes);
 
     (*env)->ReleaseByteArrayElements(env, signature, signatureBytes, 0);
     (*env)->ReleaseByteArrayElements(env, random, randomBytes, 0);
@@ -129,7 +129,7 @@ JNIEXPORT jboolean JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Pr
     uint8_t*   messageBytes   = (uint8_t*)(*env)->GetByteArrayElements(env, message, 0);
     jsize      messageLength  = (*env)->GetArrayLength(env, message);
 
-    jboolean result = (uxdsa_verify(signatureBytes, publicKeyBytes, messageBytes, messageLength) == 0);
+    jboolean result = (uxed25519_verify(signatureBytes, publicKeyBytes, messageBytes, messageLength) == 0);
 
     (*env)->ReleaseByteArrayElements(env, signature, signatureBytes, 0);
     (*env)->ReleaseByteArrayElements(env, publicKey, publicKeyBytes, 0);

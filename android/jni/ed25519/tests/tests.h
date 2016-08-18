@@ -9,13 +9,13 @@
 int sha512_fast_test(int silent);
 int elligator_fast_test(int silent);
 int curvesigs_fast_test(int silent);
-int xdsa_fast_test(int silent);
-int uxdsa_fast_test(int silent);
+int xeddsa_fast_test(int silent);
+int uxeddsa_fast_test(int silent);
 
 int curvesigs_slow_test(int silent, int iterations);
-int xdsa_slow_test(int silent, int iterations);
-int xdsa_to_curvesigs_slow_test(int silent, int iterations);
-int uxdsa_slow_test(int silent, int iterations);
+int xeddsa_slow_test(int silent, int iterations);
+int xeddsa_to_curvesigs_slow_test(int silent, int iterations);
+int uxeddsa_slow_test(int silent, int iterations);
 
 int all_fast_tests(int silent);
 

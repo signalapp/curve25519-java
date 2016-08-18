@@ -9,7 +9,7 @@
 int crypto_usign_open_modified(
   unsigned char *m,unsigned long long *mlen,
   const unsigned char *sm,unsigned long long smlen,
-  const unsigned char *pk, ge_p3* Bu
+  const unsigned char *pk, const ge_p3* Bu
 )
 {
   ge_p3 U;
