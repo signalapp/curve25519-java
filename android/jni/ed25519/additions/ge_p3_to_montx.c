@@ -1,4 +1,3 @@
-
 #include "fe.h"
 #include "crypto_additions.h"
 

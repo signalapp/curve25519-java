@@ -139,15 +139,18 @@ public class Curve25519 {
    * @param publicKey The Curve25519 public key the unique signature belongs to.
    * @param message The message that was signed.
    * @param signature The unique signature to verify.
-   * @return true if valid, false if not.
+   *
+   * @return The vrf for this signature.
    */
-  public boolean verifyUniqueSignature(byte[] publicKey, byte[] message, byte[] signature) {
+  public byte[] verifyUniqueSignature(byte[] publicKey, byte[] message, byte[] signature)
+      throws UniqueSignatureVerificationFailedException
+  {
     if (publicKey == null || publicKey.length != 32) {
       throw new IllegalArgumentException("Invalid public key!");
     }
 
     if (message == null || signature == null || signature.length != 96) {
-      return false;
+      throw new UniqueSignatureVerificationFailedException("Invalid message or signature format");
     }
 
     return provider.verifyUniqueSignature(publicKey, message, signature);

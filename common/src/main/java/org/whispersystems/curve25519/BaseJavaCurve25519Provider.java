@@ -77,7 +77,9 @@ abstract class BaseJavaCurve25519Provider implements Curve25519Provider {
     throw new AssertionError("NYI");
   }
 
-  public boolean verifyUniqueSignature(byte[] publicKey, byte[] message, byte[] signature) {
+  public byte[] verifyUniqueSignature(byte[] publicKey, byte[] message, byte[] signature)
+      throws UniqueSignatureVerificationFailedException
+  {
     throw new AssertionError("NYI");
   }
 

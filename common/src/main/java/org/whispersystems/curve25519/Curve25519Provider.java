@@ -19,7 +19,8 @@ interface Curve25519Provider {
   byte[] calculateSignature(byte[] random, byte[] privateKey, byte[] message);
   boolean verifySignature(byte[] publicKey, byte[] message, byte[] signature);
   byte[] calculateUniqueSignature(byte[] random, byte[] privateKey, byte[] message);
-  boolean verifyUniqueSignature(byte[] publicKey, byte[] message, byte[] signature);
+  byte[] verifyUniqueSignature(byte[] publicKey, byte[] message, byte[] signature)
+      throws UniqueSignatureVerificationFailedException;
 
   byte[] getRandom(int length);
 

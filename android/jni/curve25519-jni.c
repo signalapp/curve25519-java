@@ -12,7 +12,7 @@
 #include "curve25519-donna.h"
 #include "curve_sigs.h"
 #include "xeddsa.h"
-#include "uxeddsa.h"
+#include "vxeddsa.h"
 
 JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_generatePrivateKey
   (JNIEnv *env, jobject obj, jbyteArray random)
@@ -110,7 +110,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519
     uint8_t*   messageBytes    = (uint8_t*)(*env)->GetByteArrayElements(env, message, 0);
     jsize      messageLength   = (*env)->GetArrayLength(env, message);
 
-    int result = uxed25519_sign(signatureBytes, privateKeyBytes, messageBytes, messageLength, randomBytes);
+    int result = vxed25519_sign(signatureBytes, privateKeyBytes, messageBytes, messageLength, randomBytes);
 
     (*env)->ReleaseByteArrayElements(env, signature, signatureBytes, 0);
     (*env)->ReleaseByteArrayElements(env, random, randomBytes, 0);
@@ -121,7 +121,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519
     else             (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/AssertionError"), "Signature failed!");
 }
 
-JNIEXPORT jboolean JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_verifyUniqueSignature
+JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_verifyUniqueSignature
   (JNIEnv *env, jobject obj, jbyteArray publicKey, jbyteArray message, jbyteArray signature)
 {
     uint8_t*   signatureBytes = (uint8_t*)(*env)->GetByteArrayElements(env, signature, 0);
@@ -129,13 +129,18 @@ JNIEXPORT jboolean JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Pr
     uint8_t*   messageBytes   = (uint8_t*)(*env)->GetByteArrayElements(env, message, 0);
     jsize      messageLength  = (*env)->GetArrayLength(env, message);
 
-    jboolean result = (uxed25519_verify(signatureBytes, publicKeyBytes, messageBytes, messageLength) == 0);
+    jbyteArray vrf      = (*env)->NewByteArray(env, 32);
+    uint8_t*   vrfBytes = (uint8_t*)(*env)->GetByteArrayElements(env, vrf, 0);
+
+    int result = vxed25519_verify(vrfBytes, signatureBytes, publicKeyBytes, messageBytes, messageLength);
 
     (*env)->ReleaseByteArrayElements(env, signature, signatureBytes, 0);
     (*env)->ReleaseByteArrayElements(env, publicKey, publicKeyBytes, 0);
     (*env)->ReleaseByteArrayElements(env, message, messageBytes, 0);
+    (*env)->ReleaseByteArrayElements(env, vrf, vrfBytes, 0);
 
-    return result;
+    if (result == 0) return vrf;
+    else             (*env)->ThrowNew(env, (*env)->FindClass(env, "org/whispersystems/curve25519/UniqueSignatureVerificationFailedException"), "Invalid signature");
 }
 
 

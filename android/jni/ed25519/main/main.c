@@ -7,7 +7,7 @@ int main(int argc, char* argv[])
   curvesigs_slow_test(0,           10000);
   xeddsa_slow_test(0,              10000);
   xeddsa_to_curvesigs_slow_test(0, 10000);
-  uxeddsa_slow_test(0,             10000);
+  vxeddsa_slow_test(0,             10000000);
 
   return 0;
 }

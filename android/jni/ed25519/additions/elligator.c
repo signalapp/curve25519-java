@@ -63,8 +63,7 @@ void hash_to_point(ge_p3* p, const unsigned char* in, const unsigned long in_len
   unsigned char hash[64];
   fe h, u;
   unsigned char sign_bit;
-  ge_p2 p2;
-  ge_p1p1 p1p1;
+  ge_p3 p3;
 
   crypto_hash_sha512(hash, in, in_len);
 
@@ -74,47 +73,39 @@ void hash_to_point(ge_p3* p, const unsigned char* in, const unsigned long in_len
   fe_frombytes(h, hash); 
   elligator(u, h);
 
-  ge_montx_to_p2(&p2, u, sign_bit);
-
-  /* multiply by 8 (cofactor) to map onto the main subgroup,
-   * or map small-order points to the neutral element
-   * (the latter prevents leaking r mod (2, 4, 8) via U) */
-  ge_p2_dbl(&p1p1, &p2);
-  ge_p1p1_to_p2(&p2, &p1p1);
-
-  ge_p2_dbl(&p1p1, &p2);
-  ge_p1p1_to_p2(&p2, &p1p1);
-
-  ge_p2_dbl(&p1p1, &p2);
-  ge_p1p1_to_p3(p, &p1p1);
+  ge_montx_to_p3(&p3, u, sign_bit);
+  ge_scalarmult_cofactor(p, &p3);
 }
 
 
-void calculate_Bu(ge_p3* Bu, 
+void calculate_Bv(ge_p3* Bv, 
                  unsigned char* buf,
+                 const unsigned char* A,
                  const unsigned char* msg, const unsigned long msg_len)
 {
   int count;
 
-  /* Calculate SHA512(label(2) || msg) */
+  /* Calculate SHA512(label(2) || A || msg) */
   buf[0] = 0xFD;
   for (count = 1; count < 32; count++)
     buf[count] = 0xFF;
-  memmove(buf+32, msg, msg_len); 
+  memmove(buf+32, A, 32);
+  memmove(buf+64, msg, msg_len); 
 
-  hash_to_point(Bu, buf, 32 + msg_len);
+  hash_to_point(Bv, buf, 64 + msg_len);
 }
 
 
-void calculate_Bu_and_U(ge_p3* Bu, 
-                       unsigned char* U, 
+void calculate_Bv_and_V(ge_p3* Bv, 
+                       unsigned char* V, 
                        unsigned char* buf,
                        const unsigned char* a,
+                       const unsigned char* A,
                        const unsigned char* msg, const unsigned long msg_len)
 {
   ge_p3 p3;
 
-  calculate_Bu(Bu, buf, msg, msg_len);
-  ge_scalarmult(&p3, a, Bu);
-  ge_p3_tobytes(U, &p3);
+  calculate_Bv(Bv, buf, A, msg, msg_len);
+  ge_scalarmult(&p3, a, Bv);
+  ge_p3_tobytes(V, &p3);
 }

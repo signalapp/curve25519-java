@@ -44,8 +44,7 @@ int curve25519_verify(const unsigned char* signature,
   fe u;
   fe y;
   unsigned char ed_pubkey[32];
-  unsigned long long some_retval;
-  unsigned char *verifybuf = NULL; /* working buffer */
+  unsigned char *verifybuf  = NULL; /* working buffer */
   unsigned char *verifybuf2 = NULL; /* working buffer #2 */
   int result;
 
@@ -58,7 +57,6 @@ int curve25519_verify(const unsigned char* signature,
     result = -1;
     goto err;
   }
-
 
   /* Convert the Curve25519 public key into an Ed25519 public key.  In
      particular, convert Curve25519's "montgomery" x-coordinate (u) into an
@@ -86,9 +84,8 @@ int curve25519_verify(const unsigned char* signature,
   /* The below call has a strange API: */
   /* verifybuf = R || S || message */
   /* verifybuf2 = internal to next call gets a copy of verifybuf, S gets 
-     replaced with pubkey for hashing, then the whole thing gets zeroized
-     (if bad sig), or contains a copy of msg (good sig) */
-  result = crypto_sign_open_modified(verifybuf2, &some_retval, verifybuf, 64 + msg_len, ed_pubkey);
+     replaced with pubkey for hashing */
+  result = crypto_sign_open_modified(verifybuf2, verifybuf, 64 + msg_len, ed_pubkey);
 
   err:
 

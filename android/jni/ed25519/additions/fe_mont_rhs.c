@@ -4,8 +4,7 @@ void fe_mont_rhs(fe v2, fe u) {
   fe A, one;
   fe u2, Au, inner;
 
-  fe_0(one);
-  one[0] = 1;                        /* 1 */
+  fe_1(one);
   fe_0(A);
   A[0] = 486662;                     /* A = 486662 */
 

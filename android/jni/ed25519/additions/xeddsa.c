@@ -1,10 +1,9 @@
 #include <string.h>
 #include "ge.h"
-#include "curve_sigs.h"
-#include "crypto_sign.h"
 #include "crypto_additions.h"
 #include "zeroize.h"
 #include "xeddsa.h" 
+#include "crypto_verify_32.h"
 
 int xed25519_sign(unsigned char* signature_out,
                   const unsigned char* curve25519_privkey,
@@ -38,6 +37,7 @@ int xed25519_sign(unsigned char* signature_out,
   memmove(signature_out, sigbuf, 64);
 
   zeroize(a, 32);
+  zeroize(aneg, 32);
   free(sigbuf);
   return 0;
 }
@@ -49,7 +49,7 @@ int xed25519_verify(const unsigned char* signature,
   fe u;
   fe y;
   unsigned char ed_pubkey[32];
-  unsigned long long some_retval;
+  unsigned char strict[32];
   unsigned char verifybuf[MAX_MSG_LEN + 64]; /* working buffer */
   unsigned char verifybuf2[MAX_MSG_LEN + 64]; /* working buffer #2 */
 
@@ -64,6 +64,9 @@ int xed25519_verify(const unsigned char* signature,
      NOTE: u=-1 is converted to y=0 since fe_invert is mod-exp
   */
   fe_frombytes(u, curve25519_pubkey);
+  fe_tobytes(strict, u);
+  if (crypto_verify_32(strict, curve25519_pubkey) != 0)
+    return 0;
   fe_montx_to_edy(y, u);
   fe_tobytes(ed_pubkey, y);
 
@@ -74,7 +77,6 @@ int xed25519_verify(const unsigned char* signature,
   /* The below call has a strange API: */
   /* verifybuf = R || S || message */
   /* verifybuf2 = internal to next call gets a copy of verifybuf, S gets 
-     replaced with pubkey for hashing, then the whole thing gets zeroized
-     (if bad sig), or contains a copy of msg (good sig) */
-  return crypto_sign_open_modified(verifybuf2, &some_retval, verifybuf, 64 + msg_len, ed_pubkey);
+     replaced with pubkey for hashing */
+  return crypto_sign_open_modified(verifybuf2, verifybuf, 64 + msg_len, ed_pubkey);
 }
