@@ -73,12 +73,12 @@ abstract class BaseJavaCurve25519Provider implements Curve25519Provider {
     return curve_sigs.curve25519_verify(sha512provider, signature, publicKey, message, message.length) == 0;
   }
 
-  public byte[] calculateUniqueSignature(byte[] random, byte[] privateKey, byte[] message) {
+  public byte[] calculateVrfSignature(byte[] random, byte[] privateKey, byte[] message) {
     throw new AssertionError("NYI");
   }
 
-  public byte[] verifyUniqueSignature(byte[] publicKey, byte[] message, byte[] signature)
-      throws UniqueSignatureVerificationFailedException
+  public byte[] verifyVrfSignature(byte[] publicKey, byte[] message, byte[] signature)
+      throws VrfSignatureVerificationFailedException
   {
     throw new AssertionError("NYI");
   }

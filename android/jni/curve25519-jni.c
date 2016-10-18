@@ -100,7 +100,7 @@ JNIEXPORT jboolean JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Pr
     return result;
 }
 
-JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_calculateUniqueSignature
+JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_calculateVrfSignature
   (JNIEnv *env, jobject obj, jbyteArray random, jbyteArray privateKey, jbyteArray message)
 {
     jbyteArray signature       = (*env)->NewByteArray(env, 96);
@@ -121,7 +121,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519
     else             (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/AssertionError"), "Signature failed!");
 }
 
-JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_verifyUniqueSignature
+JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_verifyVrfSignature
   (JNIEnv *env, jobject obj, jbyteArray publicKey, jbyteArray message, jbyteArray signature)
 {
     uint8_t*   signatureBytes = (uint8_t*)(*env)->GetByteArrayElements(env, signature, 0);
@@ -140,7 +140,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519
     (*env)->ReleaseByteArrayElements(env, vrf, vrfBytes, 0);
 
     if (result == 0) return vrf;
-    else             (*env)->ThrowNew(env, (*env)->FindClass(env, "org/whispersystems/curve25519/UniqueSignatureVerificationFailedException"), "Invalid signature");
+    else             (*env)->ThrowNew(env, (*env)->FindClass(env, "org/whispersystems/curve25519/VrfSignatureVerificationFailedException"), "Invalid signature");
 }
 
 

@@ -73,11 +73,11 @@ class NativeCurve25519Provider implements Curve25519Provider {
   public native boolean verifySignature(byte[] publicKey, byte[] message, byte[] signature);
 
   @Override
-  public native byte[] calculateUniqueSignature(byte[] random, byte[] privateKey, byte[] message);
+  public native byte[] calculateVrfSignature(byte[] random, byte[] privateKey, byte[] message);
 
   @Override
-  public native byte[] verifyUniqueSignature(byte[] publicKey, byte[] message, byte[] signature)
-      throws UniqueSignatureVerificationFailedException;
+  public native byte[] verifyVrfSignature(byte[] publicKey, byte[] message, byte[] signature)
+      throws VrfSignatureVerificationFailedException;
 
   private native boolean smokeCheck(int dummy);
 

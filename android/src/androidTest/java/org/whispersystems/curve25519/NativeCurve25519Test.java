@@ -29,17 +29,17 @@ public class NativeCurve25519Test extends Curve25519Test {
       byte[] message = new byte[i];
       random.nextBytes(message);
 
-      byte[] signature = getInstance().calculateUniqueSignature(keys.getPrivateKey(), message);
-      byte[] vrf       = getInstance().verifyUniqueSignature(keys.getPublicKey(), message, signature);
+      byte[] signature = getInstance().calculateVrfSignature(keys.getPrivateKey(), message);
+      byte[] vrf       = getInstance().verifyVrfSignature(keys.getPublicKey(), message, signature);
 
       assertFalse(getInstance().verifySignature(keys.getPublicKey(), message, signature));
 
       message[Math.abs(random.nextInt()) % message.length] ^= 0x01;
 
       try {
-        getInstance().verifyUniqueSignature(keys.getPublicKey(), message, signature);
+        getInstance().verifyVrfSignature(keys.getPublicKey(), message, signature);
         throw new AssertionError("Should have failed");
-      } catch (UniqueSignatureVerificationFailedException e) {
+      } catch (VrfSignatureVerificationFailedException e) {
         // good
       }
     }
@@ -47,8 +47,8 @@ public class NativeCurve25519Test extends Curve25519Test {
 
   public void testUniqueSignatureVector() throws Exception {
     Curve25519KeyPair keys      = new Curve25519KeyPair(PUBLIC_KEY, PRIVATE_KEY);
-    byte[]            signature = getInstance().calculateUniqueSignature(keys.getPrivateKey(), MESSAGE);
-    byte[]            vrf       = getInstance().verifyUniqueSignature(keys.getPublicKey(), MESSAGE, signature);
+    byte[]            signature = getInstance().calculateVrfSignature(keys.getPrivateKey(), MESSAGE);
+    byte[]            vrf       = getInstance().verifyVrfSignature(keys.getPublicKey(), MESSAGE, signature);
 
     assertTrue(Arrays.equals(vrf, VRF));
   }

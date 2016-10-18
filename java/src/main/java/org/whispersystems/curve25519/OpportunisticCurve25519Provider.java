@@ -64,15 +64,15 @@ public class OpportunisticCurve25519Provider implements Curve25519Provider {
   }
 
   @Override
-  public byte[] calculateUniqueSignature(byte[] random, byte[] privateKey, byte[] message) {
-    return delegate.calculateUniqueSignature(random, privateKey, message);
+  public byte[] calculateVrfSignature(byte[] random, byte[] privateKey, byte[] message) {
+    return delegate.calculateVrfSignature(random, privateKey, message);
   }
 
   @Override
-  public byte[] verifyUniqueSignature(byte[] publicKey, byte[] message, byte[] signature)
-      throws UniqueSignatureVerificationFailedException
+  public byte[] verifyVrfSignature(byte[] publicKey, byte[] message, byte[] signature)
+      throws VrfSignatureVerificationFailedException
   {
-    return delegate.verifyUniqueSignature(publicKey, message, signature);
+    return delegate.verifyVrfSignature(publicKey, message, signature);
   }
 
 }

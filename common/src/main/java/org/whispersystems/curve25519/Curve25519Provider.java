@@ -18,9 +18,9 @@ interface Curve25519Provider {
 
   byte[] calculateSignature(byte[] random, byte[] privateKey, byte[] message);
   boolean verifySignature(byte[] publicKey, byte[] message, byte[] signature);
-  byte[] calculateUniqueSignature(byte[] random, byte[] privateKey, byte[] message);
-  byte[] verifyUniqueSignature(byte[] publicKey, byte[] message, byte[] signature)
-      throws UniqueSignatureVerificationFailedException;
+  byte[] calculateVrfSignature(byte[] random, byte[] privateKey, byte[] message);
+  byte[] verifyVrfSignature(byte[] publicKey, byte[] message, byte[] signature)
+      throws VrfSignatureVerificationFailedException;
 
   byte[] getRandom(int length);
 

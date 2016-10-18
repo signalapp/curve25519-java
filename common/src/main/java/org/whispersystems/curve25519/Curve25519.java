@@ -124,13 +124,13 @@ public class Curve25519 {
    * @param message The message to sign.
    * @return A 96-byte signature.
    */
-  public byte[] calculateUniqueSignature(byte[] privateKey, byte[] message) {
+  public byte[] calculateVrfSignature(byte[] privateKey, byte[] message) {
     if (privateKey == null || privateKey.length != 32) {
       throw new IllegalArgumentException("Invalid private key!");
     }
 
     byte[] random = provider.getRandom(64);
-    return provider.calculateUniqueSignature(random, privateKey, message);
+    return provider.calculateVrfSignature(random, privateKey, message);
   }
 
   /**
@@ -142,18 +142,18 @@ public class Curve25519 {
    *
    * @return The vrf for this signature.
    */
-  public byte[] verifyUniqueSignature(byte[] publicKey, byte[] message, byte[] signature)
-      throws UniqueSignatureVerificationFailedException
+  public byte[] verifyVrfSignature(byte[] publicKey, byte[] message, byte[] signature)
+      throws VrfSignatureVerificationFailedException
   {
     if (publicKey == null || publicKey.length != 32) {
       throw new IllegalArgumentException("Invalid public key!");
     }
 
     if (message == null || signature == null || signature.length != 96) {
-      throw new UniqueSignatureVerificationFailedException("Invalid message or signature format");
+      throw new VrfSignatureVerificationFailedException("Invalid message or signature format");
     }
 
-    return provider.verifyUniqueSignature(publicKey, message, signature);
+    return provider.verifyVrfSignature(publicKey, message, signature);
   }
 
   private static Curve25519Provider constructNativeProvider(SecureRandomProvider random) throws NoSuchProviderException {
