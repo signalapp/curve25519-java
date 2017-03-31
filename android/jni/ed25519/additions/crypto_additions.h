@@ -12,6 +12,7 @@ void sc_neg(unsigned char *b, const unsigned char *a);
 void sc_cmov(unsigned char* f, const unsigned char* g, unsigned char b);
 
 int fe_isequal(const fe f, const fe g);
+int fe_isreduced(const unsigned char* s);
 void fe_mont_rhs(fe v2, const fe u);
 void fe_montx_to_edy(fe y, const fe u);
 void fe_sqrt(fe b, const fe a);
