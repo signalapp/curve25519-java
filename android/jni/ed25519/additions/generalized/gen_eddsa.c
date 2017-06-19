@@ -87,7 +87,7 @@ err:
    M: message
 
    if empty labelset:
-     h = hash(R || K || M)
+     h = hash(R || K || M) (mod q)
    else:
      h = hash(hash(labelset || R || labelset || K || extra) || M) (mod q)
 */
