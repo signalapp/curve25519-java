@@ -75,4 +75,10 @@ public class OpportunisticCurve25519Provider implements Curve25519Provider {
     return delegate.verifyVrfSignature(publicKey, message, signature);
   }
 
+  @Override
+  public boolean internalFastTests()
+  {
+    return delegate.internalFastTests();
+  }
+
 }

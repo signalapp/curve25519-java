@@ -79,6 +79,9 @@ class NativeCurve25519Provider implements Curve25519Provider {
   public native byte[] verifyVrfSignature(byte[] publicKey, byte[] message, byte[] signature)
       throws VrfSignatureVerificationFailedException;
 
+  @Override
+  public native boolean internalFastTests();
+
   private native boolean smokeCheck(int dummy);
 
 }

@@ -88,4 +88,9 @@ abstract class BaseJavaCurve25519Provider implements Curve25519Provider {
     secureRandomProvider.nextBytes(result);
     return result;
   }
+
+  public boolean internalFastTests()
+  {
+    return true;
+  }
 }
