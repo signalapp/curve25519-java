@@ -60,7 +60,7 @@ int generalized_commit(unsigned char* R_bytes, unsigned char* r_scalar,
   if (HASHLEN > BLOCKLEN)
     goto err;
   if (HASHLEN != 64)
-    return -1;
+    goto err;
 
   memset(M_buf + M_start - BLOCKLEN, 0, BLOCKLEN);
   crypto_hash_sha512(M_buf + M_start - BLOCKLEN, buf, bufptr - buf);
