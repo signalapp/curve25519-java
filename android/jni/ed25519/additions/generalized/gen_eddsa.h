@@ -8,10 +8,10 @@
    K: encoded public key
    k: private key (scalar)
    Z: 32-bytes random
-   M_buf: buffer containing message, message starts at M_start, continues for M_len
+   M: message
 
-   prf_key = hash_pair(labelset || extra || K || Z, k)
-   r = hash_pair(prf_key, M) 
+   prf_key = hash_list(labelset || Z, k, labelset || K || extra)
+   r = hash_list(prf_key, M) (mod q)
 */
 int generalized_commit(unsigned char* R_bytes, unsigned char* r_scalar,
             const unsigned char* labelset, const unsigned long labelset_len,
@@ -20,6 +20,16 @@ int generalized_commit(unsigned char* R_bytes, unsigned char* r_scalar,
             const unsigned char* Z,
             unsigned char* M_buf, const unsigned long M_start, const unsigned long M_len);
 
+/* h: Schnorr challenge (scalar), 
+ * R: commitment (point)
+   K: encoded public key
+   M: message
+
+   if empty labelset:
+     h = hash(R || K || M)
+   else:
+     h = hash(hash(labelset || R || labelset || K || extra) || M) (mod q)
+*/
 int generalized_challenge(unsigned char* h_scalar,
               const unsigned char* labelset, const unsigned long labelset_len,
               const unsigned char* extra, const unsigned long extra_len,
