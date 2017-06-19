@@ -130,7 +130,7 @@ int generalized_challenge(unsigned char* h_scalar,
 
   crypto_hash_sha512(hash, M_buf + M_start - prefix_len, M_len + prefix_len);
   if (HASHLEN != 64)
-    return -1;
+    goto err;
   sc_reduce(hash);
   memcpy(h_scalar, hash, SCALARLEN);
   return 0;
