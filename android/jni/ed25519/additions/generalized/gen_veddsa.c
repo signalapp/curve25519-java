@@ -147,7 +147,6 @@ int generalized_veddsa_25519_sign(
     goto err;
 
   //  return (Kv || h || s)
-  labelset[labelset_len-1] = (unsigned char)'4';
   memcpy(signature_out, Kv_bytes, POINTLEN);
   memcpy(signature_out + POINTLEN, h_scalar, SCALARLEN);
   memcpy(signature_out + POINTLEN + SCALARLEN, s_scalar, SCALARLEN);
@@ -206,14 +205,14 @@ int generalized_veddsa_25519_verify(
     goto err;
 
   //  labelset = new_labelset(protocol_name, customization_label)
-  //  labelset1 = add_label(labels, "1")
   if (labelset_new(labelset, &labelset_len, LABELSETMAXLEN, 
                    (unsigned char*)protocol_name, strlen(protocol_name), 
                    customization_label, customization_label_len) != 0)
     goto err;
-  labelset_add(labelset, &labelset_len, LABELSETMAXLEN, (unsigned char*)"1", 1);
 
+  //  labelset1 = add_label(labels, "1")
   //  Bv = hash(hash(labelset1 || K) || M)
+  labelset_add(labelset, &labelset_len, LABELSETMAXLEN, (unsigned char*)"1", 1);
   if (generalized_calculate_Bv(&Bv_point, labelset, labelset_len, 
                                eddsa_25519_pubkey_bytes, M_buf, MSTART, msg_len) != 0)
     goto err;
