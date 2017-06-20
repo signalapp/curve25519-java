@@ -3,12 +3,14 @@
 #include "gen_labelset.h"
 #include "gen_constants.h"
 
+const unsigned char B_bytes[] = {0x09, 0x00};
+
 unsigned char* buffer_add(unsigned char* bufptr, const unsigned char* bufend,
                           const unsigned char* in, const unsigned long in_len)
 {
   unsigned long count = 0;
 
-  if (bufptr == NULL || bufend == NULL || bufptr >= bufend)
+  if (bufptr == NULL || bufend == NULL || bufptr > bufend)
     return NULL;
   if (in == NULL && in_len != 0)
     return NULL;
@@ -87,6 +89,8 @@ int labelset_validate(const unsigned char* labelset, const unsigned long labelse
   unsigned char count = 0;
   unsigned long offset = 0;
 
+  if (labelset == NULL)
+    return -1;
   if (labelset_len < 3)
     return -1;
 

@@ -1,6 +1,8 @@
 #ifndef __GEN_LABELSET_H__
 #define __GEN_LABELSET_H__
 
+extern const unsigned char B_bytes[];
+
 unsigned char* buffer_add(unsigned char* bufptr, const unsigned char* bufend,
                           const unsigned char* in, const unsigned long in_len);
 

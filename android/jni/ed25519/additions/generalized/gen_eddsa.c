@@ -16,10 +16,10 @@
    K: encoded public key
    k: private key (scalar)
    Z: 32-bytes random
-   M: message
+   M_buf: buffer containing message, message starts at M_start, continues for M_len
 
-   prf_key = hash_list(labelset || Z, k, labelset || K || extra)
-   r = hash_list(prf_key, M) (mod q)
+   prf_key = hash_pair(labelset || extra || K || Z, k)
+   r = hash_pair(prf_key, M) 
 */
 int generalized_commit(unsigned char* R_bytes, unsigned char* r_scalar,
             const unsigned char* labelset, const unsigned long labelset_len,
@@ -30,67 +30,64 @@ int generalized_commit(unsigned char* R_bytes, unsigned char* r_scalar,
 {
   ge_p3 R_point;
   unsigned char hash[HASHLEN];
-  unsigned char buf[BUFLEN];  
-  unsigned char* bufptr = buf;
-  unsigned char* bufend = buf + BUFLEN;
+  unsigned char* bufstart = NULL;
+  unsigned char* bufptr = NULL;
+  unsigned char* bufend = NULL;
+  unsigned long prefix_len = 0;
 
   if (labelset_validate(labelset, labelset_len) != 0)
     goto err;
-
-  bufptr = buffer_add(bufptr, bufend, labelset, labelset_len);
-  bufptr = buffer_add(bufptr, bufend, Z, RANDLEN);
-  bufptr = buffer_pad(buf, bufptr, bufend);
-  bufptr = buffer_add(bufptr, bufend, k_scalar, SCALARLEN);
-  bufptr = buffer_pad(buf, bufptr, bufend);
-  bufptr = buffer_add(bufptr, bufend, labelset, labelset_len);
-  bufptr = buffer_add(bufptr, bufend, K_bytes, POINTLEN);
-  bufptr = buffer_add(bufptr, bufend, extra, extra_len);
-
-  if (bufptr == NULL)
+  if (R_bytes == NULL || r_scalar == NULL || 
+      K_bytes == NULL || k_scalar == NULL || 
+      Z == NULL || M_buf == NULL)
     goto err;
-  if (bufptr - buf > BUFLEN)
+  if (labelset == NULL && labelset_len != 0)
     goto err;
-
-  /* Make sure there's BLOCKLEN space before the message, zero that space,
-   * then hash the prf_key into there, then hash it again to get r */
-  if (M_buf == NULL)
-    goto err;
-  if (M_start < BLOCKLEN)
-    goto err;
-  if (HASHLEN > BLOCKLEN)
+  if (extra == NULL && extra_len != 0)
     goto err;
   if (HASHLEN != 64)
     goto err;
 
-  memset(M_buf + M_start - BLOCKLEN, 0, BLOCKLEN);
-  crypto_hash_sha512(M_buf + M_start - BLOCKLEN, buf, bufptr - buf);
-  crypto_hash_sha512(hash, M_buf + M_start - BLOCKLEN, M_len + BLOCKLEN);
+  prefix_len = 0;
+  prefix_len += POINTLEN + labelset_len + RANDLEN;
+  prefix_len += ((BLOCKLEN - (prefix_len % BLOCKLEN)) % BLOCKLEN);
+  prefix_len += SCALARLEN;
+  prefix_len += ((BLOCKLEN - (prefix_len % BLOCKLEN)) % BLOCKLEN);
+  prefix_len += labelset_len + POINTLEN + extra_len;
+  if (prefix_len > M_start)
+    goto err;
 
+  bufstart = M_buf + M_start - prefix_len;
+  bufptr = bufstart;
+  bufend = M_buf + M_start;
+  bufptr = buffer_add(bufptr, bufend, B_bytes, POINTLEN);
+  bufptr = buffer_add(bufptr, bufend, labelset, labelset_len);
+  bufptr = buffer_add(bufptr, bufend, Z, RANDLEN);
+  bufptr = buffer_pad(bufstart, bufptr, bufend);
+  bufptr = buffer_add(bufptr, bufend, k_scalar, SCALARLEN);
+  bufptr = buffer_pad(bufstart, bufptr, bufend);
+  bufptr = buffer_add(bufptr, bufend, labelset, labelset_len);
+  bufptr = buffer_add(bufptr, bufend, K_bytes, POINTLEN);
+  bufptr = buffer_add(bufptr, bufend, extra, extra_len);
+  if (bufptr != bufend || bufptr != M_buf + M_start || bufptr - bufstart != prefix_len)
+    goto err;
+
+  crypto_hash_sha512(hash, M_buf + M_start - prefix_len, prefix_len + M_len);
   sc_reduce(hash);
   ge_scalarmult_base(&R_point, hash);
   ge_p3_tobytes(R_bytes, &R_point);
   memcpy(r_scalar, hash, SCALARLEN);
 
   zeroize(hash, HASHLEN);
-  zeroize(buf, BUFLEN);
+  zeroize(M_buf, M_start);
   return 0;
 
 err:
   zeroize(hash, HASHLEN);
-  zeroize(buf, BUFLEN);
+  zeroize(M_buf, M_start);
   return -1;
 }
 
-/* h: Schnorr challenge (scalar), 
- * R: commitment (point)
-   K: encoded public key
-   M: message
-
-   if empty labelset:
-     h = hash(R || K || M) (mod q)
-   else:
-     h = hash(hash(labelset || R || labelset || K || extra) || M) (mod q)
-*/
 int generalized_challenge(unsigned char* h_scalar,
               const unsigned char* labelset, const unsigned long labelset_len,
               const unsigned char* extra, const unsigned long extra_len,
@@ -99,48 +96,50 @@ int generalized_challenge(unsigned char* h_scalar,
               unsigned char* M_buf, const unsigned long M_start, const unsigned long M_len)
 {
   unsigned char hash[HASHLEN];
-  unsigned char buf[BUFLEN];
-  unsigned char* bufptr = buf;
-  unsigned char* bufend = buf + BUFLEN;
+  unsigned char* bufstart = NULL;
+  unsigned char* bufptr = NULL;
+  unsigned char* bufend = NULL;
   unsigned long prefix_len = 0;
 
   if (labelset_validate(labelset, labelset_len) != 0)
     goto err;
-
-  if (M_buf == NULL)
+  if (h_scalar == NULL || R_bytes == NULL || K_bytes == NULL || M_buf == NULL)
     goto err;
-
-  if (2*labelset_len + 2*POINTLEN + extra_len > BUFLEN)
+  if (labelset == NULL && labelset_len != 0)
+    goto err;
+  if (extra == NULL && extra_len != 0)
+    goto err;
+  if (HASHLEN != 64)
     goto err;
 
   if (labelset_is_empty(labelset, labelset_len)) {
-    if (M_start < 2*POINTLEN)
+    if (2*POINTLEN > M_start)
       goto err;
     memcpy(M_buf + M_start - (2*POINTLEN),  R_bytes, POINTLEN);
     memcpy(M_buf + M_start - (1*POINTLEN),  K_bytes, POINTLEN);
     prefix_len = 2*POINTLEN;
   } else {
-    if (M_start < HASHLEN)
+    prefix_len = 3*POINTLEN + 2*labelset_len + extra_len; 
+    if (prefix_len > M_start)
       goto err;
+
+    bufstart = M_buf + M_start - prefix_len;
+    bufptr = bufstart;
+    bufend = M_buf + M_start;
+    bufptr = buffer_add(bufptr, bufend, B_bytes, POINTLEN);
     bufptr = buffer_add(bufptr, bufend, labelset, labelset_len);
     bufptr = buffer_add(bufptr, bufend, R_bytes, POINTLEN);
     bufptr = buffer_add(bufptr, bufend, labelset, labelset_len);
     bufptr = buffer_add(bufptr, bufend, K_bytes, POINTLEN);
     bufptr = buffer_add(bufptr, bufend, extra, extra_len);
+
     if (bufptr == NULL)
       goto err;
-    if (bufptr - buf > BUFLEN)
+    if (bufptr != bufend || bufptr != M_buf + M_start || bufptr - bufstart != prefix_len)
       goto err;
-    crypto_hash_sha512(M_buf + M_start - HASHLEN, buf, bufptr - buf);
-    prefix_len = HASHLEN;
   }
 
-  if (prefix_len > M_start)
-    goto err;
-
-  crypto_hash_sha512(hash, M_buf + M_start - prefix_len, M_len + prefix_len);
-  if (HASHLEN != 64)
-    goto err;
+  crypto_hash_sha512(hash, M_buf + M_start - prefix_len, prefix_len + M_len);
   sc_reduce(hash);
   memcpy(h_scalar, hash, SCALARLEN);
   return 0;

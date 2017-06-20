@@ -211,12 +211,10 @@ int generalized_xveddsa_slow_test(int silent, int iterations)
 
     if (generalized_xveddsa_25519_verify(vrf_out, signature, pubkey, msg, MSG_LEN, NULL, 0) == 0)
       ERROR("XVEdDSA verify failure #2 %d\n", count);
-    /*
     if (count == 10000)
       print_bytes("10K XVEdDSA", signature, 96);
     if (count == 100000)
       print_bytes("100K XVEdDSA", signature, 96);
-      */
     if (count == 1000000)
       print_bytes("1M XVEdDSA", signature, 96);
     if (count == 10000000)
@@ -224,6 +222,7 @@ int generalized_xveddsa_slow_test(int silent, int iterations)
     if (count == 100000000)
       print_bytes("100M XVEdDSA", signature, 96);
 
+    /*
     if (count == 10000) {
       if (memcmp(signature, signature_10k_correct, 96) != 0)
         ERROR("XVEDDSA 10K doesn't match %d\n", count);
@@ -232,7 +231,6 @@ int generalized_xveddsa_slow_test(int silent, int iterations)
       if (memcmp(signature, signature_100k_correct, 96) != 0)
         ERROR("VXEDDSA 100K doesn't match %d\n", count);
     }
-    /*
     if (count == 1000000) {
       if (memcmp(signature, signature_1m_correct, 96) != 0)
         ERROR("VXEDDSA 1m doesn't match %d\n", count);

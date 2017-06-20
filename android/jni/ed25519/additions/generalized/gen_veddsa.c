@@ -17,23 +17,19 @@ static int generalized_calculate_Bv(ge_p3* Bv_point,
                               const unsigned char* K_bytes,
                               unsigned char* M_buf, const unsigned long M_start, const unsigned long M_len)
 {
-  unsigned char buf[BUFLEN];
-  unsigned char* bufptr = buf;
-  unsigned char* bufend = buf + BUFLEN;
+  unsigned long prefix_len = 2*POINTLEN + labelset_len;
 
-  if (labelset_len + POINTLEN > BUFLEN)
+  if (prefix_len > M_start)
+    return -1;
+  if (labelset_validate(labelset, labelset_len) != 0)
+    return -1;
+  if (Bv_point == NULL || K_bytes == NULL || M_buf == NULL)
     return -1;
 
-  bufptr = buffer_add(bufptr, bufend, labelset, labelset_len);
-  bufptr = buffer_add(bufptr, bufend, K_bytes, POINTLEN);
-  if (bufptr == NULL)
-    return -1;
-  if (bufptr - buf > BUFLEN)
-    return -1;
-  if (M_start < HASHLEN)
-    return -1;
-  crypto_hash_sha512(M_buf + M_start - HASHLEN, buf, bufptr - buf);
-  hash_to_point(Bv_point, M_buf + M_start - HASHLEN, HASHLEN + M_len);
+  memcpy(M_buf + M_start - prefix_len, B_bytes, POINTLEN);
+  memcpy(M_buf + M_start - prefix_len + POINTLEN, labelset, labelset_len);
+  memcpy(M_buf + M_start - prefix_len + POINTLEN + labelset_len, K_bytes, POINTLEN);
+  hash_to_point(Bv_point, M_buf + M_start - prefix_len, prefix_len + M_len);
   if (ge_isneutral(Bv_point))
     return -1;
   return 0;
@@ -49,11 +45,16 @@ static int generalized_calculate_vrf_output(unsigned char* vrf_output,
   unsigned char cKv_bytes[POINTLEN];
   unsigned char hash[HASHLEN];
 
-  if (labelset_len + POINTLEN > BUFLEN)
+  if (labelset_len + 2*POINTLEN > BUFLEN)
+    return -1;
+  if (labelset_validate(labelset, labelset_len) != 0)
+    return -1;
+  if (vrf_output == NULL || cKv_point == NULL)
     return -1;
 
   ge_p3_tobytes(cKv_bytes, cKv_point);
 
+  bufptr = buffer_add(bufptr, bufend, B_bytes, POINTLEN);
   bufptr = buffer_add(bufptr, bufend, labelset, labelset_len);
   bufptr = buffer_add(bufptr, bufend, cKv_bytes, POINTLEN);
   if (bufptr == NULL)
@@ -147,6 +148,7 @@ int generalized_veddsa_25519_sign(
     goto err;
 
   //  return (Kv || h || s)
+  labelset[labelset_len-1] = (unsigned char)'4';
   memcpy(signature_out, Kv_bytes, POINTLEN);
   memcpy(signature_out + POINTLEN, h_scalar, SCALARLEN);
   memcpy(signature_out + POINTLEN + SCALARLEN, s_scalar, SCALARLEN);
@@ -205,14 +207,14 @@ int generalized_veddsa_25519_verify(
     goto err;
 
   //  labelset = new_labelset(protocol_name, customization_label)
+  //  labelset1 = add_label(labels, "1")
   if (labelset_new(labelset, &labelset_len, LABELSETMAXLEN, 
                    (unsigned char*)protocol_name, strlen(protocol_name), 
                    customization_label, customization_label_len) != 0)
     goto err;
-
-  //  labelset1 = add_label(labels, "1")
-  //  Bv = hash(hash(labelset1 || K) || M)
   labelset_add(labelset, &labelset_len, LABELSETMAXLEN, (unsigned char*)"1", 1);
+
+  //  Bv = hash(hash(labelset1 || K) || M)
   if (generalized_calculate_Bv(&Bv_point, labelset, labelset_len, 
                                eddsa_25519_pubkey_bytes, M_buf, MSTART, msg_len) != 0)
     goto err;

@@ -11,7 +11,7 @@
 #define SIGNATURELEN 64
 #define VRFSIGNATURELEN 96
 #define VRFOUTPUTLEN 32
-#define MSTART 128
+#define MSTART 1024
 
 #endif
 
