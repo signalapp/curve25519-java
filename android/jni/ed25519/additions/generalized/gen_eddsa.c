@@ -79,7 +79,7 @@ int generalized_commit(unsigned char* R_bytes, unsigned char* r_scalar,
   memcpy(r_scalar, hash, SCALARLEN);
 
   zeroize(hash, HASHLEN);
-  zeroize(M_buf, M_start);
+  zeroize(bufstart, prefix_len);
   return 0;
 
 err:
