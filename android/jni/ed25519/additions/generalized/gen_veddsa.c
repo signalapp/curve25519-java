@@ -17,13 +17,15 @@ static int generalized_calculate_Bv(ge_p3* Bv_point,
                               const unsigned char* K_bytes,
                               unsigned char* M_buf, const unsigned long M_start, const unsigned long M_len)
 {
-  unsigned long prefix_len = 2*POINTLEN + labelset_len;
+  unsigned long prefix_len = 0;
 
-  if (prefix_len > M_start)
-    return -1;
   if (labelset_validate(labelset, labelset_len) != 0)
     return -1;
   if (Bv_point == NULL || K_bytes == NULL || M_buf == NULL)
+    return -1;
+
+  prefix_len = 2*POINTLEN + labelset_len;
+  if (prefix_len > M_start)
     return -1;
 
   memcpy(M_buf + M_start - prefix_len, B_bytes, POINTLEN);
