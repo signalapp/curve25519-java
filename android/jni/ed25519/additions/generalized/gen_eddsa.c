@@ -11,15 +11,15 @@
 #include "crypto_additions.h"
 #include "utility.h"
 
-/* R: commitment (point), 
+/* B: base point 
+ * R: commitment (point), 
    r: private nonce (scalar)
    K: encoded public key
    k: private key (scalar)
    Z: 32-bytes random
-   M_buf: buffer containing message, message starts at M_start, continues for M_len
+   M: buffer containing message, message starts at M_start, continues for M_len
 
-   prf_key = hash_pair(labelset || extra || K || Z, k)
-   r = hash_pair(prf_key, M) 
+   r = hash(B || labelset || Z || pad1 || k || pad2 || labelset || K || extra || M) (mod q)
 */
 int generalized_commit(unsigned char* R_bytes, unsigned char* r_scalar,
             const unsigned char* labelset, const unsigned long labelset_len,
@@ -88,6 +88,11 @@ err:
   return -1;
 }
 
+/* if is_labelset_empty(labelset):
+       return hash(R || K || M) (mod q)
+   else:
+       return hash(B || labelset || R || labelset || K || extra || M) (mod q)
+*/
 int generalized_challenge(unsigned char* h_scalar,
               const unsigned char* labelset, const unsigned long labelset_len,
               const unsigned char* extra, const unsigned long extra_len,
