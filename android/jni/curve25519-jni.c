@@ -12,7 +12,7 @@
 #include "curve25519-donna.h"
 #include "curve_sigs.h"
 #include "xeddsa.h"
-#include "vxeddsa.h"
+#include "gen_x.h"
 
 JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_generatePrivateKey
   (JNIEnv *env, jobject obj, jbyteArray random)
@@ -110,7 +110,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519
     uint8_t*   messageBytes    = (uint8_t*)(*env)->GetByteArrayElements(env, message, 0);
     jsize      messageLength   = (*env)->GetArrayLength(env, message);
 
-    int result = vxed25519_sign(signatureBytes, privateKeyBytes, messageBytes, messageLength, randomBytes);
+    int result = generalized_xveddsa_25519_sign(signatureBytes, privateKeyBytes, messageBytes, messageLength, randomBytes, NULL, 0);
 
     (*env)->ReleaseByteArrayElements(env, signature, signatureBytes, 0);
     (*env)->ReleaseByteArrayElements(env, random, randomBytes, 0);
@@ -132,7 +132,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519
     jbyteArray vrf      = (*env)->NewByteArray(env, 32);
     uint8_t*   vrfBytes = (uint8_t*)(*env)->GetByteArrayElements(env, vrf, 0);
 
-    int result = vxed25519_verify(vrfBytes, signatureBytes, publicKeyBytes, messageBytes, messageLength);
+    int result = generalized_xveddsa_25519_verify(vrfBytes, signatureBytes, publicKeyBytes, messageBytes, messageLength, NULL, 0);
 
     (*env)->ReleaseByteArrayElements(env, signature, signatureBytes, 0);
     (*env)->ReleaseByteArrayElements(env, publicKey, publicKeyBytes, 0);
