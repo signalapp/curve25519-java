@@ -51,19 +51,5 @@ int crypto_sign_open_modified(
   const unsigned char *pk
   );
 
-int crypto_vsign_modified(
-  unsigned char *sm,
-  const unsigned char *M,unsigned long Mlen,
-  const unsigned char *a, 
-  const unsigned char *A,
-  const unsigned char *random,
-  const ge_p3 *Bu,
-  const unsigned char *U);
-
-int crypto_vsign_open_modified(
-  unsigned char *m,
-  const unsigned char *sm,unsigned long long smlen,
-  const unsigned char *pk, const ge_p3* Bu);
-
 
 #endif

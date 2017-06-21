@@ -24,6 +24,8 @@ interface Curve25519Provider {
 
   byte[] getRandom(int length);
 
+  boolean internalFastTests();
+
   void setRandomProvider(SecureRandomProvider provider);
 
 }

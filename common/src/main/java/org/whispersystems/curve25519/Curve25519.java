@@ -156,6 +156,12 @@ public class Curve25519 {
     return provider.verifyVrfSignature(publicKey, message, signature);
   }
 
+
+  public boolean internalFastTests()
+  {
+    return provider.internalFastTests();
+  }
+
   private static Curve25519Provider constructNativeProvider(SecureRandomProvider random) throws NoSuchProviderException {
     return constructClass("NativeCurve25519Provider", random);
   }
