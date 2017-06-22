@@ -44,7 +44,9 @@ repositories {
 dependencies {
     compile project(':java')
 
-    androidTestCompile project(":tests")
+    androidTestCompile (project(":tests")) {
+        exclude module: 'junit'
+    }
 }
 
 signing {
