@@ -17,6 +17,7 @@ static int generalized_calculate_Bv(ge_p3* Bv_point,
                               const unsigned char* K_bytes,
                               unsigned char* M_buf, const unsigned long M_start, const unsigned long M_len)
 {
+  unsigned char* bufptr;
   unsigned long prefix_len = 0;
 
   if (labelset_validate(labelset, labelset_len) != 0)
@@ -28,9 +29,13 @@ static int generalized_calculate_Bv(ge_p3* Bv_point,
   if (prefix_len > M_start)
     return -1;
 
-  memcpy(M_buf + M_start - prefix_len, B_bytes, POINTLEN);
-  memcpy(M_buf + M_start - prefix_len + POINTLEN, labelset, labelset_len);
-  memcpy(M_buf + M_start - prefix_len + POINTLEN + labelset_len, K_bytes, POINTLEN);
+  bufptr = M_buf + M_start - prefix_len;
+  bufptr = buffer_add(bufptr, M_buf + M_start, B_bytes, POINTLEN);
+  bufptr = buffer_add(bufptr, M_buf + M_start, labelset, labelset_len);
+  bufptr = buffer_add(bufptr, M_buf + M_start, K_bytes, POINTLEN);
+  if (bufptr == NULL || bufptr != M_buf + M_start)
+    return -1;
+
   hash_to_point(Bv_point, M_buf + M_start - prefix_len, prefix_len + M_len);
   if (ge_isneutral(Bv_point))
     return -1;
@@ -47,11 +52,17 @@ static int generalized_calculate_vrf_output(unsigned char* vrf_output,
   unsigned char cKv_bytes[POINTLEN];
   unsigned char hash[HASHLEN];
 
+  if (vrf_output == NULL)
+    return -1;
+  memset(vrf_output, 0, VRFOUTPUTLEN);
+
   if (labelset_len + 2*POINTLEN > BUFLEN)
     return -1;
   if (labelset_validate(labelset, labelset_len) != 0)
     return -1;
-  if (vrf_output == NULL || cKv_point == NULL)
+  if (cKv_point == NULL)
+    return -1;
+  if (VRFOUTPUTLEN > HASHLEN)
     return -1;
 
   ge_p3_tobytes(cKv_bytes, cKv_point);
@@ -94,7 +105,22 @@ int generalized_veddsa_25519_sign(
   unsigned char* M_buf = NULL;
   char* protocol_name = "VEdDSA_25519_SHA512_Elligator2";
 
+  if (signature_out == NULL)
+    goto err;
   memset(signature_out, 0, VRFSIGNATURELEN);
+
+  if (eddsa_25519_pubkey_bytes == NULL)
+    goto err;
+  if (eddsa_25519_privkey_scalar == NULL)
+    goto err;
+  if (msg == NULL)
+    goto err;
+  if (customization_label == NULL && customization_label_len != 0)
+    goto err;
+  if (customization_label_len > LABELMAXLEN)
+    goto err;
+  if (msg_len > MSGMAXLEN)
+    goto err;
 
   if ((M_buf = malloc(msg_len + MSTART)) == 0) {
     goto err;
@@ -188,6 +214,23 @@ int generalized_veddsa_25519_verify(
   unsigned char extra[3*POINTLEN];
   unsigned char* M_buf = NULL;
   char* protocol_name = "VEdDSA_25519_SHA512_Elligator2";
+
+  if (vrf_out == NULL)
+    goto err;
+  memset(vrf_out, 0, VRFOUTPUTLEN);
+
+  if (signature == NULL)
+    goto err;
+  if (eddsa_25519_pubkey_bytes == NULL)
+    goto err;
+  if (msg == NULL)
+    goto err;
+  if (customization_label == NULL && customization_label_len != 0)
+    goto err;
+  if (customization_label_len > LABELMAXLEN)
+    goto err;
+  if (msg_len > MSGMAXLEN)
+    goto err;
 
   if ((M_buf = malloc(msg_len + MSTART)) == 0) {
     goto err;
