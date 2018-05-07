@@ -63,6 +63,18 @@ public class Curve25519 {
   }
 
   /**
+   * Generates a Curve25519 keypair with given random bytes(32 bytes).
+   *
+   * @return A generated Curve25519 keypair.
+   */
+  public Curve25519KeyPair generateKeyPair(byte[] random) {
+    byte[] privateKey = provider.generatePrivateKey(random);
+    byte[] publicKey  = provider.generatePublicKey(privateKey);
+
+    return new Curve25519KeyPair(publicKey, privateKey);
+  }
+
+  /**
    * Calculates an ECDH agreement.
    *
    * @param publicKey The Curve25519 (typically remote party's) public key.
