@@ -17,8 +17,12 @@ version          = version_number
 group            = group_info
 
 android {
-    compileSdkVersion 21
-    buildToolsVersion "21.1.2"
+    compileSdkVersion 28
+    buildToolsVersion "28.0.2"
+
+    defaultConfig {
+        targetSdkVersion 4
+    }
 
     sourceSets {
         main {
