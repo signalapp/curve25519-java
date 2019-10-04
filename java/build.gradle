@@ -20,12 +20,34 @@ sourceSets {
     }
 }
 
+buildscript {
+    repositories {
+        jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "me.champeau.gradle:jmh-gradle-plugin:0.5.0-rc-2"
+    }
+}
+
+apply plugin: "me.champeau.gradle.jmh"
+
+jmh {
+    dependencies {
+        compileClasspath 'org.openjdk.jmh:jmh-core:1.4.1'
+    }
+    humanOutputFile = null
+    duplicateClassesStrategy = 'exclude'
+}
+
 dependencies {
     testCompile project(':tests')
 }
 
 signing {
-    required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
+    required { hasProperty("release") && gradle.taskGraph.hasTask("uploadArchives") }
     sign configurations.archives
 }
 

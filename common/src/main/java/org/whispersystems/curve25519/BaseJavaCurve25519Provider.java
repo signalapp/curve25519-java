@@ -9,6 +9,7 @@ package org.whispersystems.curve25519;
 import org.whispersystems.curve25519.java.Sha512;
 import org.whispersystems.curve25519.java.curve_sigs;
 import org.whispersystems.curve25519.java.scalarmult;
+import org.whispersystems.curve25519.java.gen_x;
 
 abstract class BaseJavaCurve25519Provider implements Curve25519Provider {
 
@@ -74,13 +75,26 @@ abstract class BaseJavaCurve25519Provider implements Curve25519Provider {
   }
 
   public byte[] calculateVrfSignature(byte[] random, byte[] privateKey, byte[] message) {
-    throw new AssertionError("NYI");
+    byte[] result = new byte[96];
+    byte[] random32 = new byte[32];
+    if (random.length >= 32) {
+        System.arraycopy(random, 0, random32, 0, 32);
+    } else throw new IllegalArgumentException("too small random");
+    if (gen_x.generalized_xveddsa_25519_sign(sha512provider, result, privateKey, message, random32)) {
+      return result;
+    } else {
+      throw new IllegalArgumentException();
+    }
   }
 
   public byte[] verifyVrfSignature(byte[] publicKey, byte[] message, byte[] signature)
       throws VrfSignatureVerificationFailedException
   {
-    throw new AssertionError("NYI");
+    byte[] result = new byte[32];
+    if (gen_x.generalized_xveddsa_25519_verify(sha512provider, result, signature, publicKey, message) != 0) {
+      throw new VrfSignatureVerificationFailedException();
+    }
+    return result;
   }
 
   public byte[] getRandom(int length) {
