@@ -225,4 +225,27 @@ public abstract class Curve25519ProviderTest extends TestCase {
       } catch (VrfSignatureVerificationFailedException ignored) {}
     }
   }
+  
+  public void testFeIsequal1() {
+    int[] one = new int[] {0,0,0,0,0,0,0,0,0,1};
+    int[] zero = new int[] {0,0,0,0,0,0,0,0,0,0};
+    assertTrue(fe_isequal.fe_isequal(one, zero) == 0);
+  }
+  public void testFeIsequal2() {
+    int[] one = new int[] {0,0,0,0,0,0,0,0,0,1};
+    int[] zero = new int[] {0,0,0,0,0,0,0,0,0,1};
+    assertTrue(fe_isequal.fe_isequal(one, zero) == 1);
+  }
+
+  public void testFeIsequal3() {
+    int[] one = new int[] {0,0,0,0,0,0,0,0,0,0};
+    int[] zero = new int[] {0,0,0,0,0,0,0,0,0,0};
+    assertTrue(fe_isequal.fe_isequal(one, zero) == 1);
+  }
+
+  public void testFeIsequal4() {
+    int[] one = new int[] {0,0,0,0,0,0,0,0,0,0};
+    int[] zero = new int[] {0,0,0,0,0,0,0,0,0,1};
+    assertTrue(fe_isequal.fe_isequal(one, zero) == 0);
+  }
 }
