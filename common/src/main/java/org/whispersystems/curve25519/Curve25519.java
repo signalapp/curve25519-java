@@ -140,6 +140,8 @@ public class Curve25519 {
    * @param message The message that was signed.
    * @param signature The unique signature to verify.
    *
+   * @throws VrfSignatureVerificationFailedException when verification is failed
+   *
    * @return The vrf for this signature.
    */
   public byte[] verifyVrfSignature(byte[] publicKey, byte[] message, byte[] signature)
