@@ -9,7 +9,7 @@ public class fe_isequal {
     {
         int[] h = new int[10];
         fe_sub.fe_sub(h, f, g);
-        return 1 ^ (1 & (fe_isnonzero.fe_isnonzero(h) >> 8));
+        return 1 & (((fe_isnonzero.fe_isnonzero(h) & 0xff) - 1) >> 8);
     }
 
 }
