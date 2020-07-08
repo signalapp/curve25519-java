@@ -1,12 +1,18 @@
 package org.whispersystems.curve25519;
 
 import junit.framework.TestCase;
+import org.whispersystems.curve25519.java.ed25519.ge_p3_tobytes;
+import org.whispersystems.curve25519.java.ed25519.ge_scalarmult;
+import org.whispersystems.curve25519.java.ge_frombytes;
+import org.whispersystems.curve25519.java.ge_p3;
+import org.whispersystems.curve25519.java.ed25519.ge_neg;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 
 import static org.fest.assertions.Assertions.assertThat;
+import static org.whispersystems.curve25519.java.ed25519.ge_isneutral.ge_isneutral;
+import static org.whispersystems.curve25519.java.ge_scalarmult_base.ge_scalarmult_base;
 
 
 public abstract class Curve25519Test extends TestCase {
@@ -140,6 +146,88 @@ public abstract class Curve25519Test extends TestCase {
     signature[0] ^= 0x01;
 
     assertFalse(getInstance().verifySignature(keys.getPublicKey(), message, signature));
+  }
+
+  public void testVRFSignatures() throws NoSuchProviderException, IllegalArgumentException{
+    Curve25519KeyPair keys      = getInstance().generateKeyPair();
+    byte[]            message1   = new byte[1024];
+    byte[]            message2   = new byte[ 512];
+    byte[]            signature1 = getInstance().calculateVrfSignature(keys.getPrivateKey(), message1);
+    byte[]            signature2 = getInstance().calculateVrfSignature(keys.getPrivateKey(), message2);
+
+    try {
+      byte[]            vrf_out   = getInstance().verifyVrfSignature(keys.getPublicKey(), message1, signature1);
+    } catch (VrfSignatureVerificationFailedException e) {
+      throw new AssertionError("Sig verification failed!");
+    }
+
+    try {
+      byte[]            vrf_out   = getInstance().verifyVrfSignature(keys.getPublicKey(), message1, signature2);
+      throw new AssertionError("Sig verification succeeded!");
+    } catch (VrfSignatureVerificationFailedException e) {
+    }
+  }
+  
+  public void testGeScalarMult() {
+    byte[] B_bytes = {
+            0x58, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
+            0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
+            0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
+            0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
+    };
+
+  byte[] misc_bytes = {
+          (byte) 0x57, (byte) 0x17, (byte) 0xfa, (byte) 0xce, (byte) 0xca, (byte) 0xb9, (byte) 0xdf, (byte) 0x0e,
+          (byte) 0x90, (byte) 0x67, (byte) 0xaa, (byte) 0x46, (byte) 0xba, (byte) 0x83, (byte) 0x2f, (byte) 0xeb,
+          (byte) 0x1c, (byte) 0x49, (byte) 0xd0, (byte) 0x21, (byte) 0xb1, (byte) 0x33, (byte) 0xff, (byte) 0x11,
+          (byte) 0xc9, (byte) 0x7a, (byte) 0xb8, (byte) 0xcf, (byte) 0xe3, (byte) 0x29, (byte) 0x46, (byte) 0x17,
+    };
+
+    byte[] q_scalar = {
+            (byte) 0xed, (byte) 0xd3, (byte) 0xf5, (byte) 0x5c, (byte) 0x1a, (byte) 0x63, (byte) 0x12, (byte) 0x58,
+            (byte) 0xd6, (byte) 0x9c, (byte) 0xf7, (byte) 0xa2, (byte) 0xde, (byte) 0xf9, (byte) 0xde, (byte) 0x14,
+            (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+            (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x10,
+    };
+
+    byte[] c_scalar = {
+              0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+
+    byte[] neutral_bytes = {
+            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+
+
+    ge_p3 point1 = new ge_p3(), point2 = new ge_p3(), B_point = new ge_p3(), misc_point = new ge_p3(), miscneg_point = new ge_p3();
+
+
+    byte[] output1 = new byte[32], output2 = new byte[32];
+    if (ge_frombytes.ge_frombytes_negate_vartime(B_point, B_bytes) != 0)
+      throw new AssertionError("Ge From Bytes Negate Var Time Failed!");
+    if (ge_frombytes.ge_frombytes_negate_vartime(miscneg_point, misc_bytes) != 0)
+      throw new AssertionError("Ge From Bytes Negate Var Time Failed!");
+    ge_neg.ge_neg(B_point, B_point);
+    ge_neg.ge_neg(misc_point, miscneg_point);
+
+
+    ge_scalarmult_base(point1,  q_scalar);
+    ge_scalarmult.ge_scalarmult(point2, q_scalar, B_point);
+    ge_p3_tobytes.ge_p3_tobytes(output1, point1);
+    ge_p3_tobytes.ge_p3_tobytes(output2, point2);
+    if (!java.util.Arrays.equals(output1, neutral_bytes))
+      throw new AssertionError("Ge Scalar Multiplaction Failed!");
+    if (!java.util.Arrays.equals(output1, output2))
+      throw new AssertionError("Ge Scalar Multiplaction Failed!");
+    if (ge_isneutral(point1 ) != 1 && ge_isneutral(point2)==1 && ge_isneutral(B_point) != 0)
+      throw new AssertionError("Ge Scalar Multiplaction Failed!");
+
   }
 
   protected Curve25519 getInstance() throws NoSuchProviderException {

@@ -9,6 +9,7 @@ package org.whispersystems.curve25519;
 import org.whispersystems.curve25519.java.Sha512;
 import org.whispersystems.curve25519.java.curve_sigs;
 import org.whispersystems.curve25519.java.scalarmult;
+import org.whispersystems.curve25519.java.ed25519.veddsa_sigs;
 
 abstract class BaseJavaCurve25519Provider implements Curve25519Provider {
 
@@ -69,18 +70,31 @@ abstract class BaseJavaCurve25519Provider implements Curve25519Provider {
     return result;
   }
 
-  public boolean verifySignature(byte[] publicKey, byte[] message, byte[] signature) {
+  public boolean verifySignature(byte[] publicKey, byte[] message, byte[] signature)
+  {
     return curve_sigs.curve25519_verify(sha512provider, signature, publicKey, message, message.length) == 0;
   }
 
   public byte[] calculateVrfSignature(byte[] random, byte[] privateKey, byte[] message) {
-    throw new AssertionError("NYI");
+    byte[] result = new byte[96];
+
+    if (veddsa_sigs.VRFsign(sha512provider, result, privateKey, message, message.length, random) != 0) {
+      throw new IllegalArgumentException("Message exceeds max length!");
+    }
+
+    return result;
   }
 
   public byte[] verifyVrfSignature(byte[] publicKey, byte[] message, byte[] signature)
       throws VrfSignatureVerificationFailedException
   {
-    throw new AssertionError("NYI");
+      byte[] result = new byte[32];
+
+      if (veddsa_sigs.VRFverify(sha512provider, result, signature, publicKey, message, message.length) != 0) {
+        throw new VrfSignatureVerificationFailedException();
+      }
+
+      return result;
   }
 
   public byte[] getRandom(int length) {
