@@ -14,7 +14,7 @@ static int[] sqrtm1 = {
 -32595792,-7943725,9377950,3500415,12389472,-272473,-25146209,-2005654,326686,11406482
 } ;
 
-static int ge_frombytes_negate_vartime(ge_p3 h,byte[] s)
+public static int ge_frombytes_negate_vartime(ge_p3 h, byte[] s)
 {
   int[] u = new int[10];
   int[] v = new int[10];
