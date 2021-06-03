@@ -81,7 +81,7 @@ byte[]     sharedSecret = cipher.calculateAgreement(publicKey, privateKey);
 
 ```
 Curve25519 cipher    = Curve25519.getInstance(Curve25519.BEST);
-byte[]     signature = cipher.calculateSignature(secureRandom, privateKey, message);
+byte[]     signature = cipher.calculateSignature(privateKey, message);
 ```
 
 ### Verifying a signature:
