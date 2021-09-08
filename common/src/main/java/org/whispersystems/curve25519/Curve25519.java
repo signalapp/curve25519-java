@@ -156,6 +156,18 @@ public class Curve25519 {
     return provider.verifyVrfSignature(publicKey, message, signature);
   }
 
+  /**
+   * Create a public key from the bytes used to generate a private key
+   *
+   * @param privateKey the bytes used for a private key
+   *
+   * @return the bytes for the public key, not containing a type.
+   */
+  public byte[] createPublicKeyFromPrivateKey(byte[] privateKey) {
+    byte[] publicKey  = provider.generatePublicKey(privateKey);
+    return publicKey;
+  }
+
   private static Curve25519Provider constructNativeProvider(SecureRandomProvider random) throws NoSuchProviderException {
     return constructClass("NativeCurve25519Provider", random);
   }

@@ -1,7 +1,7 @@
 apply plugin: 'java'
 
 apply plugin: 'maven'
-apply plugin: 'signing'
+// apply plugin: 'signing'
 
 sourceCompatibility = 1.7
 archivesBaseName = "curve25519-java"
@@ -24,6 +24,7 @@ dependencies {
     testCompile project(':tests')
 }
 
+/*
 signing {
     required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
     sign configurations.archives
@@ -34,9 +35,9 @@ uploadArchives {
     repositories.mavenDeployer {
         beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-        repository(url: sonatypeRepo) {
-            authentication(userName: whisperSonatypeUsername, password: whisperSonatypePassword)
-        }
+        // repository(url: sonatypeRepo) {
+            // authentication(userName: whisperSonatypeUsername, password: whisperSonatypePassword)
+        // }
 
         pom.project {
             name 'curve25519-java'
@@ -67,6 +68,7 @@ uploadArchives {
         }
     }
 }
+*/
 
 task installArchives(type: Upload) {
     description "Installs the artifacts to the local Maven repository."
