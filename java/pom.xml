@@ -14,12 +14,6 @@
         <maven.compiler.release>11</maven.compiler.release>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>Gluon</id>
-            <url>https://nexus.gluonhq.com/nexus/content/repositories/releases</url>
-        </repository>
-    </repositories>
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
