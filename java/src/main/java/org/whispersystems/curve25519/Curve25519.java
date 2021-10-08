@@ -26,11 +26,14 @@ public class Curve25519 {
   public static Curve25519 getInstance(String type, SecureRandomProvider random)
       throws NoSuchProviderException
   {
+    return new Curve25519(new JavaCurve25519Provider());
+/*
     if      (NATIVE.equals(type)) return new Curve25519(constructNativeProvider(random));
     else if (JAVA.equals(type))   return new Curve25519(constructJavaProvider(random));
     else if (J2ME.equals(type))   return new Curve25519(constructJ2meProvider(random));
     else if (BEST.equals(type))   return new Curve25519(constructOpportunisticProvider(random));
     else                          throw new NoSuchProviderException(type);
+*/
   }
 
   private final Curve25519Provider provider;

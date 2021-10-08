@@ -1,15 +1,13 @@
 package org.whispersystems.curve25519;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
-// import static org.fest.assertions.Assertions.assertThat;
-
-
-public abstract class Curve25519Test extends TestCase {
+public abstract class Curve25519Test {
 
   public abstract void testCheckProvider() throws NoSuchProviderException;
   public abstract String getProviderName();
@@ -59,8 +57,8 @@ public abstract class Curve25519Test extends TestCase {
     byte[] sharedOne = getInstance().calculateAgreement(bobPublic, alicePrivate);
     byte[] sharedTwo = getInstance().calculateAgreement(alicePublic, bobPrivate);
 
-    // assertThat(sharedOne).isEqualTo(shared);
-    // assertThat(sharedTwo).isEqualTo(shared);
+    assertArrayEquals(sharedOne, shared);
+    assertArrayEquals(sharedTwo, shared);
   }
 
   public void testRandomAgreements() throws NoSuchAlgorithmException, NoSuchProviderException {
@@ -71,7 +69,7 @@ public abstract class Curve25519Test extends TestCase {
       byte[] sharedAlice = getInstance().calculateAgreement(bob.getPublicKey(), alice.getPrivateKey());
       byte[] sharedBob   = getInstance().calculateAgreement(alice.getPublicKey(), bob.getPrivateKey());
 
-      // assertThat(sharedAlice).isEqualTo(sharedBob);
+      assertArrayEquals(sharedAlice, sharedBob);
     }
   }
 
