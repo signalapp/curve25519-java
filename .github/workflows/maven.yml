@@ -11,6 +11,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      JAVA_VERSION: 17
+
     steps:
     - uses: actions/checkout@v2
     - name: 'Download OpenJDK'
